@@ -1,0 +1,12 @@
+approvers:
+  - mstemm
+  - kaizhe
+reviewers:
+  - leodido
+  - fntlnz
+  - mfdii
+  - kaizhe
+  - mstemm
+labels:
+  - area/rules
+

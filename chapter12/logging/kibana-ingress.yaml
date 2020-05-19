@@ -1,0 +1,16 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: kibana-ingress
+  namespace: logging
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: kibana.{hostip}.nip.io
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: kibana
+          servicePort: 80

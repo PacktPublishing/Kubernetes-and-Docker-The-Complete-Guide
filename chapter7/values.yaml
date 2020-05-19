@@ -1,0 +1,30 @@
+network:
+  openunison_host: "k8sou.apps.XX-XX-XX-XX.nip.io"
+  dashboard_host: "k8sdb.apps.XX-XX-XX-XX.nip.io"
+  api_server_host: ""
+  session_inactivity_timeout_seconds: 900
+  k8s_url: https://0.0.0.0:6443
+cert_template:
+  ou: "Kubernetes"
+  o: "MyOrg"
+  l: "My Cluster"
+  st: "State of Cluster"
+  c: "MyCountry"
+image: "docker.io/tremolosecurity/openunison-k8s-login-saml2:latest"
+myvd_config_path: "WEB-INF/myvd.conf"
+k8s_cluster_name: kubernetes
+enable_impersonation: false
+dashboard:
+  namespace: "kubernetes-dashboard"
+  cert_name: "kubernetes-dashboard-certs"
+  label: "k8s-app=kubernetes-dashboard"
+  service_name: kubernetes-dashboard
+certs:
+  use_k8s_cm: false
+trusted_certs: []
+monitoring:
+  prometheus_service_account: system:serviceaccount:monitoring:prometheus-k8s
+saml:
+  idp_url: https://portal.apps.tremolo.io/idp-test/metadata/dfbe4040-cd32-470e-a9b6-809c840
+  metadata_xml_b64: ""
+
