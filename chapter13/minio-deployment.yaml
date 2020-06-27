@@ -78,9 +78,9 @@ spec:
         - --config-dir=/config
         env:
         - name: MINIO_ACCESS_KEY
-          value: "minio"
+          value: "packt"
         - name: MINIO_SECRET_KEY
-          value: "minio123"
+          value: "packt"
         ports:
         - containerPort: 9000
         volumeMounts:
