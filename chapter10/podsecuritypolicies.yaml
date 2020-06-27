@@ -1,0 +1,210 @@
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: pod-security-policy-default
+spec:
+  fsGroup:
+    rule: 'MustRunAs'
+    ranges:
+    # Forbid adding the root group.
+    - min: 1
+      max: 65535
+  runAsUser:
+    rule: 'MustRunAs'
+    ranges:
+    # Forbid adding the root group.
+    - min: 1
+      max: 65535
+  seLinux:
+    rule: RunAsAny
+  supplementalGroups:
+    rule: 'MustRunAs'
+    ranges:
+    # Forbid adding the root group.
+    - min: 1
+      max: 65535
+  volumes:
+  - emptyDir
+  - secret
+  - configMap
+  - persistentVolumeClaim
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: default-psp
+rules:
+- apiGroups:
+  - policy
+  resourceNames:
+  - pod-security-policy-default
+  resources:
+  - podsecuritypolicies
+  verbs:
+  - use
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: default-psp
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: default-psp
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: Group
+  name: system:authenticated
+---
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  annotations:
+    # See https://kubernetes.io/docs/concepts/policy/pod-security-policy/#seccomp
+    seccomp.security.alpha.kubernetes.io/allowedProfileNames: '*'
+  name: privileged
+spec:
+  allowedCapabilities:
+  - '*'
+  allowPrivilegeEscalation: true
+  fsGroup:
+    rule: 'RunAsAny'
+  hostIPC: true
+  hostNetwork: true
+  hostPID: true
+  hostPorts:
+  - min: 0
+    max: 65535
+  privileged: true
+  readOnlyRootFilesystem: false
+  runAsUser:
+    rule: 'RunAsAny'
+  seLinux:
+    rule: 'RunAsAny'
+  supplementalGroups:
+    rule: 'RunAsAny'
+  volumes:
+  - '*'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: privileged-psp
+  namespace: kube-system
+rules:
+- apiGroups:
+  - policy
+  resourceNames:
+  - privileged
+  resources:
+  - podsecuritypolicies
+  verbs:
+  - use
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kube-system-psp
+  namespace: kube-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: privileged-psp
+subjects:
+# For the kubeadm kube-system nodes
+- apiGroup: rbac.authorization.k8s.io
+  kind: Group
+  name: system:nodes
+- kind: ServiceAccount
+  namespace: kube-system
+  name: attachdetach-controller
+- kind: ServiceAccount
+  namespace: kube-system
+  name: pvc-protection-controller
+- kind: ServiceAccount
+  namespace: kube-system
+  name: pv-protection-controller
+- kind: ServiceAccount
+  namespace: kube-system
+  name: pod-garbage-collector
+- kind: ServiceAccount
+  namespace: kube-system
+  name: persistent-volume-binder
+- kind: ServiceAccount
+  namespace: kube-system
+  name: node-controller
+- kind: ServiceAccount
+  namespace: kube-system
+  name: namespace-controller
+- kind: ServiceAccount
+  namespace: kube-system
+  name: kube-proxy
+- kind: ServiceAccount
+  namespace: kube-system
+  name: job-controller
+- kind: ServiceAccount
+  namespace: kube-system
+  name: horizontal-pod-autoscaler
+- kind: ServiceAccount
+  namespace: kube-system
+  name: generic-garbage-collector
+- kind: ServiceAccount
+  namespace: kube-system
+  name: expand-controller
+- kind: ServiceAccount
+  namespace: kube-system
+  name: endpoint-controller
+- kind: ServiceAccount
+  namespace: kube-system
+  name: disruption-controller
+- kind: ServiceAccount
+  namespace: kube-system
+  name: default
+- kind: ServiceAccount
+  namespace: kube-system
+  name: daemon-set-controller
+- kind: ServiceAccount
+  namespace: kube-system
+  name: cronjob-controller
+- kind: ServiceAccount
+  namespace: kube-system
+  name: coredns
+- kind: ServiceAccount
+  namespace: kube-system
+  name: clusterrole-aggregation-controller
+- kind: ServiceAccount
+  namespace: kube-system
+  name: certificate-controller
+- kind: ServiceAccount
+  namespace: kube-system
+  name: canal
+- kind: ServiceAccount
+  namespace: kube-system
+  name: bootstrap-signer
+- kind: ServiceAccount
+  namespace: kube-system
+  name: replication-controller
+- kind: ServiceAccount
+  namespace: kube-system
+  name: resourcequota-controller
+- kind: ServiceAccount
+  namespace: kube-system
+  name: service-account-controller
+- kind: ServiceAccount
+  namespace: kube-system
+  name: service-controller
+- kind: ServiceAccount
+  namespace: kube-system
+  name: statefulset-controller
+- kind: ServiceAccount
+  namespace: kube-system
+  name: token-cleaner
+- kind: ServiceAccount
+  namespace: kube-system
+  name: ttl-controller
+- kind: ServiceAccount
+  namespace: kube-system
+  name: calico-node
+- kind: ServiceAccount
+  namespace: kube-system
+  name: calico-kube-controllers
