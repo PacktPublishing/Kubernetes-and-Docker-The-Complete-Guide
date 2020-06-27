@@ -1,0 +1,16 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: minio-ingress
+  namespace: velero
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: minio.[hostip]1.nip.io
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: minio
+          servicePort: 9000
