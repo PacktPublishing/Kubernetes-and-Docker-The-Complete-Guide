@@ -7,7 +7,7 @@ metadata:
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   rules:
-  - host: minio.[hostip]1.nip.io
+  - host: minio.[hostip].nip.io
     http:
       paths:
       - path: /
