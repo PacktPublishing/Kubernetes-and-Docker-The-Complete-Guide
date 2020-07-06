@@ -8,8 +8,14 @@ violation[{"msg": msg, "details": {}}] {
 
 # returns true if a valid registry is not specified
 invalidRegistry {
+  not validRegistry
+}
+
+# checks if the containers match any of the specified registries
+validRegistry {
   input_containers[container]
-  not startswith(container.image, "quay.io/")
+  allowedRegistries := input.parameters.registries[_]
+  startswith(container.image, allowedRegistries)
 }
 
 # load images from Pod objects
@@ -23,7 +29,6 @@ input_containers[container] {
 }
 
 # load images from CronJob objects
-# Uncomment in chapter 11
-#input_containers[container] {
-#  container := input.review.object.spec.jobTemplate.spec.template.spec.containers[_]
-#}
+input_containers[container] {
+  container := input.review.object.spec.jobTemplate.spec.template.spec.containers[_]
+}

@@ -10,7 +10,12 @@ spec:
         listKind: K8sAllowedRegistriesList
         plural: k8sallowedregistries
         singular: k8sallowedregistries
-      validation: {}
+      validation:
+        openAPIV3Schema:
+          properties:
+            registries:
+              type: array
+              items: string
   targets:
     - target: admission.k8s.gatekeeper.sh
       rego: |
@@ -24,8 +29,14 @@ spec:
 
         # returns true if a valid registry is not specified
         invalidRegistry {
+          not validRegistry
+        }
+
+        # checks if the containers match any of the specified registries
+        validRegistry {
           input_containers[container]
-          not startswith(container.image, "quay.io/")
+          allowedRegistries := input.parameters.registries[_]
+          startswith(container.image, allowedRegistries)
         }
 
         # load images from Pod objects
@@ -39,7 +50,6 @@ spec:
         }
 
         # load images from CronJob objects
-        # Uncomment in chapter 11
         input_containers[container] {
           container := input.review.object.spec.jobTemplate.spec.template.spec.containers[_]
         }

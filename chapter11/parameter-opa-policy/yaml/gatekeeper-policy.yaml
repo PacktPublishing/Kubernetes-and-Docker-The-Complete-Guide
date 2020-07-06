@@ -15,4 +15,5 @@ spec:
         kinds:
         - CronJob
     namespaces: ["openunison"]
-  parameters: {}
+  parameters:
+    registries: ["docker.io/tremolosecurity/"]
