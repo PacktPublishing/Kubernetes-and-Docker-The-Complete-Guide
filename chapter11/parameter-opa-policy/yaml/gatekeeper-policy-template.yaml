@@ -26,30 +26,20 @@ spec:
           msg := "Invalid registry"
         }
 
-
         # returns true if a valid registry is not specified
         invalidRegistry {
-          not validRegistry
+          ok_images = [image | startswith(input_images[_],input.parameters.registries[_]) ; image = input_images[_] ]
+          count(ok_images) != count(input_images)
         }
 
-        # checks if the containers match any of the specified registries
-        validRegistry {
-          input_containers[container]
-          allowedRegistries := input.parameters.registries[_]
-          startswith(container.image, allowedRegistries)
+        input_images[image] {
+          image := input.review.object.spec.template.spec.containers[_].image
         }
 
-        # load images from Pod objects
-        input_containers[container] {
-          container := input.review.object.spec.containers[_]
+        input_images[image] {
+          image := input.review.object.spec.containers[_].image
         }
 
-        # load images from Deployment and StatefulSet objects
-        input_containers[container] {
-          container := input.review.object.spec.template.spec.containers[_]
-        }
-
-        # load images from CronJob objects
-        input_containers[container] {
-          container := input.review.object.spec.jobTemplate.spec.template.spec.containers[_]
+        input_images[image] {
+          image := input.review.object.spec.jobTemplate.spec.template.spec.containers[_].image
         }
