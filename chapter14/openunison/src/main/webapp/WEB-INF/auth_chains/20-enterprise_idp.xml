@@ -1,0 +1,44 @@
+<chain name="enterprise_idp" level="20" root="o=Data">
+  <authMech>
+    <name>SAML2</name>
+    <required>required</required>
+    <params>
+      <param value="#[IDP_POST]" name="idpURL" />
+      <param value="#[IDP_REDIR]" name="idpRedirURL" />
+      <param value="idp-saml2-sig" name="idpSigKeyName" />
+      <param value="uid" name="ldapAttribute" />
+      <param value="saml" name="dnOU" />
+      <param value="inetOrgPerson" name="defaultOC" />
+      <param name="authCtxRef" value=""/>
+      <param name="spSigKey" value="unison-saml2-rp-sig" />
+      <param name="sigAlg" value="RSA-SHA256" />
+      <param name="signAuthnReq" value="true"/>
+      <param name="assertionsSigned" value="true" />
+      <param name="responsesSigned" value="false" />
+      <param name="assertionEncrypted" value="false" />
+      <param name="spEncKey" value="" />
+      <param name="forceToSSL" value="false" />
+      <param name="dontLinkToLDAP" value="true" />
+      <param name="logoutURL" value="https://#[K8S_DASHBOARD_HOST]/logout" />
+      <param name="entityID" value="#[IDP_ENTITY_ID]" />
+      <param name="idpRedirLogoutURL" value="#[IDP_LOGOUT]"/>
+    </params>
+  </authMech>
+  <authMech>
+    <name>jit</name>
+    <required>required</required>
+    <params>
+      <param name="nameAttr" value="uid" />
+      <param name="workflowName" value="jitdb" />
+    </params>
+  </authMech>
+  <authMech>
+    <name>genoidctoken</name>
+    <required>required</required>
+    <params>
+      <param name="idpName" value="k8sIdp" />
+      <param name="trustName" value="kubernetes" />
+
+    </params>
+  </authMech>
+</chain>

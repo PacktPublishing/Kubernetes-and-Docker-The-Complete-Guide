@@ -1,0 +1,47 @@
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: artifact-deployment
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+- kind: ServiceAccount
+  namespace: openunison-deploy
+  name: default
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: artifact-deployment
+  namespace: openunison-deploy
+spec:
+  template:
+    spec:
+      containers:
+      - name: artifact-deployment
+        image: docker.io/tremolosecurity/kubernetes-artifact-deployment:1.1.0
+        command: ["java", "-jar", "/usr/local/artifactdeploy/artifact-deploy.jar",  "-extraCertsPath","/etc/extracerts","-installScriptURL", "file:///etc/input-maps/deploy.js","-kubernetesURL","https://kubernetes.default.svc.cluster.local","-rootCaPath","/var/run/secrets/kubernetes.io/serviceaccount/ca.crt","-secretsPath","/etc/secrets/input.props","-tokenPath","/var/run/secrets/kubernetes.io/serviceaccount/token","-deploymentTemplate","file:///etc/input-maps/openunison.yaml"]
+        volumeMounts:
+          - name: secrets-dir
+            mountPath: "/etc/secrets"
+            readOnly: true
+          - name: extra-certs-dir
+            mountPath: "/etc/extracerts"
+            readOnly: true
+          - name: input-maps
+            mountPath: "/etc/input-maps"
+            readOnly: true 
+      restartPolicy: Never
+      volumes:
+        - name : secrets-dir
+          secret:
+            secretName: input
+        - name : extra-certs-dir
+          configMap:
+            name: extracerts
+        - name: input-maps
+          configMap:
+            name: deployment-scripts
+  backoffLimit: 1

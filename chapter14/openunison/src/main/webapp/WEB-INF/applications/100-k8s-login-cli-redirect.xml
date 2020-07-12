@@ -1,0 +1,29 @@
+<application name="k8s-login-cli-redirect" azTimeoutMillis="30000"   >
+    <urls>
+      <url regex="false" authChain="LoginService" overrideHost="true" overrideReferer="true">
+        <host>#[OU_HOST]</host>
+        <filterChain>
+          <filter class="com.tremolosecurity.prelude.filters.StopProcessing" />
+        </filterChain>
+        <uri>/cli-login</uri>
+        <results>
+          <azSuccess>redirect-to-local-login</azSuccess>
+        </results>
+        <azRules>
+          <rule scope="dn" constraint="o=Tremolo" />
+        </azRules>
+      </url>
+  
+    </urls>
+    <cookieConfig>
+      <sessionCookieName>tremolosession</sessionCookieName>
+      <domain>#[OU_HOST]</domain>
+      <logoutURI>/</logoutURI>
+      <keyAlias>session-unison</keyAlias>
+      <secure>true</secure>
+      <httpOnly>true</httpOnly>
+      <timeout>1</timeout>
+      <scope>-1</scope>
+    </cookieConfig>
+  </application>
+  

@@ -1,0 +1,31 @@
+<application name="metrics" azTimeoutMillis="30000"  >
+    <urls>
+      <url regex="false" authChain="oauth2k8s" overrideHost="true" overrideReferer="true">
+        <host>*</host>
+        <filterChain>
+            <filter class="com.tremolosecurity.prometheus.filter.MetricsFilter" />
+        </filterChain>
+        <uri>/metrics</uri>
+        
+        <results>
+          <azSuccess>
+          </azSuccess>
+        </results>
+        <azRules>
+          <rule scope="dn" constraint="username=#[PROMETHEUS_SERVICE_ACCOUNT:system:serviceaccount:monitoring:prometheus-operator-prometheus],ou=oauth2,o=Tremolo" />
+        </azRules>
+      </url>
+  
+    </urls>
+    <cookieConfig>
+      <sessionCookieName>metricssession</sessionCookieName>
+      <domain>*</domain>
+      <logoutURI>/metrics</logoutURI>
+      <keyAlias>session-unison</keyAlias>
+      <secure>true</secure>
+      <httpOnly>true</httpOnly>
+      <timeout>1</timeout>
+      <scope>-1</scope>
+    </cookieConfig>
+  </application>
+  
