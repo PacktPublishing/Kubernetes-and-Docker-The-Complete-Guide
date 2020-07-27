@@ -54,7 +54,7 @@ global:
   ingress:
     configureCertmanager: false
     annotations: 
-      cert-manager.io/cluster-issuer: letsencrypt
+      cert-manager.io/cluster-issuer: ca-issuer
     enabled: true
     tls: {}
     #   enabled: true
