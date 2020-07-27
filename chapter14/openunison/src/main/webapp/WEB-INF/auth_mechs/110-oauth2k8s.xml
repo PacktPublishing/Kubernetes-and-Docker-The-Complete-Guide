@@ -1,8 +1,0 @@
-<mechanism name="oauth2k8s">
-        <uri>/auth/oauth2k8s</uri>
-        <className>com.tremolosecurity.proxy.auth.OAuth2K8sServiceAccount</className>
-        <init>
-    
-        </init>
-        <params />
-    </mechanism>

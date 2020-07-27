@@ -1,8 +1,0 @@
-<mechanism name="jit">
-  <uri>/auth/jit</uri>
-  <className>com.tremolosecurity.provisioning.auth.JITAuthMech</className>
-  <init>
-  </init>
-  <params>
-  </params>
-</mechanism>

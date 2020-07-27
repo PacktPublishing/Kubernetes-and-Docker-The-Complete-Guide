@@ -1,7 +1,0 @@
-# Patch Log
-
-Automatic Update - 20191222T190931.535Z
-Automatic Update - 20191223T142810.341Z
-Automatic Update - 20200110T022515.417Z
-Automatic Update - 20200114T022221.194Z
-Automatic Update - 20200208T022453.783Z

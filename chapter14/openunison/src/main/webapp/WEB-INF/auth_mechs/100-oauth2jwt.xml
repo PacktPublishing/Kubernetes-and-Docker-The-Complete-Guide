@@ -1,8 +1,0 @@
-<mechanism name="oauth2jwt">
-        <uri>/auth/oauth2jwt</uri>
-        <className>com.tremolosecurity.proxy.auth.oauth2.OAuth2JWT</className>
-        <init>
-
-        </init>
-        <params />
-</mechanism> 
