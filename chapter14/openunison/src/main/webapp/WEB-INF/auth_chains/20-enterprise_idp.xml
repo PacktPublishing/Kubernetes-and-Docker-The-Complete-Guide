@@ -41,6 +41,14 @@
     </params>
   </authMech>
   <authMech>
+    <name>jit</name>
+    <required>required</required>
+    <params>
+      <param name="nameAttr" value="uid" />
+      <param name="workflowName" value="dev-ns-jit" />
+    </params>
+  </authMech>
+  <authMech>
     <name>genoidctoken</name>
     <required>required</required>
     <params>
@@ -49,4 +57,5 @@
 
     </params>
   </authMech>
+
 </chain>

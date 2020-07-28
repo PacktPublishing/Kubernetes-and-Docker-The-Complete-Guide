@@ -173,7 +173,7 @@
                         <param name="nameSpace.unique" value="false"/>
                         <param name="nameSpace.type" value="text"/>
 
-                        <param name="callWorkflowInit" value="workflowName=NewK8SNamespace" />
+                        <param name="callWorkflowInit" value="workflowName=NewApplication" />
                         <param name="callWorkflowInit" value="targetName=k8s" />
                         <param name="callWorkflowInit" value="projectAttributeName=nameSpace" />
                     </filter>

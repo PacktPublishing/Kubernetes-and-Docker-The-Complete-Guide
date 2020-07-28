@@ -4,7 +4,7 @@
         <param name="nameAttr" value="uid"/>
       </customTask>
 
-      <ifAttrHasValue name="groups" value="administrators">
+      <ifAttrHasValue name="groups" value="k8s-cluster-administrators">
           <onSuccess>
               <addAttribute name="isAdmin" value="true" />
           </onSuccess>

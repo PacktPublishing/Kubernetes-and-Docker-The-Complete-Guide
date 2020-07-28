@@ -1,0 +1,103 @@
+<workflow  name="dev-ns-jit" label="Dev Namespace JIT" description="Dev Namespace JIT" inList="false" orgid="687da09f-8ec1-48ac-b035-f2f182b9bd1e">
+    <tasks>
+      <customTask className="com.tremolosecurity.provisioning.customTasks.LoadGroups">
+        <param name="nameAttr" value="uid"/>
+      </customTask>
+
+      <customTask className="com.tremolosecurity.unison.k8s.tasks.CreateNamespaceNameFromUid">
+        <param name="uidAttribute" value="uid"/>
+      </customTask>
+
+      
+      <customTask className="com.tremolosecurity.provisioning.customTasks.AddGroupToStore">
+        <param name="target" value="jitdb"/>
+        <param name="name" value="approvers-k8s-$nameSpace$"/>
+        <param name="attributes" value="unison.group.create.sql=INSERT INTO localGroups (name,description) VALUES (?,?)"/>
+        <param name="attributes" value="unison.group.create.param.2=Approve access to $nameSpace$" />
+    </customTask>
+    <customTask className="com.tremolosecurity.provisioning.customTasks.AddGroupToStore">
+        <param name="target" value="jitdb"/>
+        <param name="name" value="k8s-namespace-administrators-$nameSpace$"/>
+        <param name="attributes" value="unison.group.create.sql=INSERT INTO localGroups (name,description) VALUES (?,?)"/>
+        <param name="attributes" value="unison.group.create.param.2=Manage kubernetes namespace $nameSpace$" />
+    </customTask>
+   
+    <mapping strict="true">
+        <onSuccess>
+            <addGroup name="approvers-k8s-$nameSpace$" remove="false"/>
+            <addGroup name="k8s-namespace-administrators-$nameSpace$" remove="false"/>
+            <provision sync="false" target="jitdb" setPassword="false" onlyPassedInAttributes="false">
+                <attributes>
+                  <value>uid</value>
+                </attributes>
+            </provision>
+        </onSuccess>
+        <onFailure/>
+        <map>
+            <mapping targetAttributeName="uid" targetAttributeSource="uid" sourceType="user"/>
+        </map>
+    </mapping>
+
+    <customTask className="com.tremolosecurity.provisioning.tasks.CreateK8sObject">
+        <param name="targetName" value="k8s"/>
+        <param name="template" >
+<![CDATA[ 
+{
+"kind": "Namespace",
+"apiVersion": "v1",
+"metadata": {
+"name": "$nameSpace$",
+"labels": {
+"name": "$nameSpace$",
+"type": "user-sandbox"
+}
+}
+}
+]]> 
+        </param>
+        <param name="kind" value="Namespace" />
+        <param name="url" value="/api/v1/namespaces" />
+    </customTask>
+
+
+
+    <customTask className="com.tremolosecurity.provisioning.tasks.CreateK8sObject">
+        <param name="targetName" value="k8s"/>
+        <param name="template" >
+<![CDATA[ 
+            {
+                "kind": "RoleBinding",
+                "apiVersion": "rbac.authorization.k8s.io/v1",
+                "metadata": {
+                  "name": "admins-binding",
+                  "namespace": "$nameSpace$"
+                },
+                "subjects": [
+                  {
+                    "kind": "Group",
+                    "name": "k8s-namespace-administrators-$nameSpace$",
+                    "apiGroup": "rbac.authorization.k8s.io"
+                  }
+                ],
+                "roleRef": {
+                  "kind": "ClusterRole",
+                  "name": "admin",
+                  "apiGroup": "rbac.authorization.k8s.io"
+                }
+              }
+              ]]>                        
+            </param>
+        <param name="kind" value="RoleBinding" />
+        <param name="url" value="/apis/rbac.authorization.k8s.io/v1/namespaces/$nameSpace$/rolebindings" />
+    </customTask>
+
+
+
+    
+
+    <notifyUser subject="Project created" mailAttrib="mail">
+        <msg>Your project has been created</msg>
+    </notifyUser>
+    <resync keepExternalAttrs="false" changeRoot="true" newRoot="o=Tremolo" />
+    </tasks>
+  </workflow>
