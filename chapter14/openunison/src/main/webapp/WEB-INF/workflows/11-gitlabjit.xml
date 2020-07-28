@@ -32,6 +32,7 @@
                     <value>name</value>
                     <value>email</value>
                     <value>isAdmin</value>
+                    <value>skipConfirmation</value>
                 </attributes>
             </provision>
         </onSuccess>

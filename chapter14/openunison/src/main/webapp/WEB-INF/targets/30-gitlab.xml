@@ -7,4 +7,5 @@
     <targetAttribute name="email" source="email" sourceType="user"/>
     <targetAttribute name="name" source="name" sourceType="user"/>
     <targetAttribute name="isAdmin" source="isAdmin" sourceType="user"/>
+    <targetAttribute name="skipConfirmation" source="true" sourceType="static"/>
 </target>
