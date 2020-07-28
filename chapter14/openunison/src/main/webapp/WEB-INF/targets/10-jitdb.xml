@@ -1,0 +1,28 @@
+<target name="jitdb" className="com.tremolosecurity.provisioning.core.providers.BasicDB">
+  <params>
+    <param name="driver" value="#[OU_JDBC_DRIVER]"/>
+    <param name="url" value="#[OU_JDBC_URL]"/>
+    <param name="user" value="#[OU_JDBC_USER]"/>
+    <param name="password" value="#[OU_JDBC_PASSWORD]"/>
+    <param name="maxCons" value="10"/>
+    <param name="maxIdleCons" value="10"/>
+    <param name="validationQuery" value="#[OU_JDBC_VALIDATION]" />
+    <param name="userTable" value="localUsers"/>
+    <param name="userPrimaryKey" value="userId"/>
+    <param name="userName" value="sub"/>
+    <param name="groupMode" value="ManyToMany"/>
+    <param name="groupTable" value="localGroups"/>
+    <param name="groupName" value="name"/>
+    <param name="groupUserKey" value="userId"/>
+    <param name="groupLinkTableName" value="userGroups"/>
+    <param name="groupGroupKey" value="groupId"/>
+    <param name="groupPrimaryKey" value="groupId"/>
+    <param name="userSQL" value=""/>
+    <param name="groupSQL" value=""/>
+    <param name="customProvider" value=""/>
+  </params>
+  <targetAttribute name="sub" source="sub" sourceType="user"/>
+  <targetAttribute name="mail" source="mail" sourceType="user"/>
+  <targetAttribute name="firstName" source="firstName" sourceType="user"/>
+  <targetAttribute name="lastName" source="lastName" sourceType="user"/>
+</target>

@@ -1,0 +1,8 @@
+<mechanism name="SAML2">
+  <uri>/auth/SAML2Auth</uri>
+  <className>com.tremolosecurity.proxy.auth.SAML2Auth</className>
+  <init>
+
+  </init>
+  <params />
+</mechanism>

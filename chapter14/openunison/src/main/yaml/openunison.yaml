@@ -1,0 +1,414 @@
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: users.openunison.tremolo.io
+spec:
+  group: openunison.tremolo.io
+  versions:
+    - name: v1
+      served: true
+      storage: true
+  version: v1
+  scope: Namespaced
+  names:
+    plural: users
+    singular: user
+    kind: User
+    shortNames:
+    - usr
+  validation:
+   # openAPIV3Schema is the schema for validating custom objects.
+    openAPIV3Schema:
+      properties:
+        spec:
+          properties:
+            sub:
+              type: string
+            groups:
+              type: array
+              items:
+                type: string
+            first_name:
+              type: string
+            last_name:
+              type: string
+            email:
+              type: string
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: oidc-sessions.openunison.tremolo.io
+spec:
+  group: openunison.tremolo.io
+  versions:
+    - name: v1
+      served: true
+      storage: true
+  version: v1
+  scope: Namespaced
+  names:
+    plural: oidc-sessions
+    singular: oidc-session
+    kind: OidcSession
+    shortNames:
+    - oidc
+  validation:
+   # openAPIV3Schema is the schema for validating custom objects.
+    openAPIV3Schema:
+      properties:
+        spec:
+          properties:
+            session_id:
+              type: string
+            client_id:
+              type: string
+            encrypted_id_token:
+              type: string
+            encrypted_access_token:
+              type: string
+            expires:
+              type: string
+            user_dn:
+              type: string
+            refresh_token:
+              type: string
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  namespace: openunison
+  name: oidc-user-sessions
+rules:
+- apiGroups: ["openunison.tremolo.io"]
+  resources: ["oidc-sessions","users"]
+  verbs: ["*"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: oidc-user-sessions
+  namespace: openunison
+subjects:
+- kind: ServiceAccount
+  name: openunison-orchestra
+  namespace: openunison
+roleRef:
+  kind: Role
+  name: oidc-user-sessions
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: openunisons.openunison.tremolo.io
+spec:
+  group: openunison.tremolo.io
+  versions:
+    - name: v1
+      served: true
+      storage: true
+  version: v1
+  scope: Namespaced
+  subresources:
+    status: {}
+  names:
+    plural: openunisons
+    singular: openunison
+    kind: OpenUnison
+    shortNames:
+    - ou
+  validation:
+   # openAPIV3Schema is the schema for validating custom objects.
+    openAPIV3Schema:
+      properties:
+        spec:
+          properties:
+            image:
+              type: string
+            replicas:
+              type: integer
+            enable_activemq:
+              type: boolean
+            activemq_image:
+              type: string
+            dest_secret:
+              type: string
+            source_secret:
+              type: string
+            secret_data:
+              type: array
+              items:
+                type: string
+            openshift:
+              type: object
+              properties:
+                git:
+                  type: object
+                  properties:
+                    repo:
+                      type: string
+                    branch: 
+                      type: string
+                    dir:
+                      type: string
+                builder_image:
+                  type: string
+            hosts:
+              type: array
+              items:
+                type: object
+                properties:
+                  names:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        env_var:
+                          type: string
+                  ingress_name: 
+                    type: string
+                  secret_name:
+                    type: string
+                  node_selectors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name: 
+                          type: string
+                        value:
+                          type: string
+            non_secret_data:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  value:
+                    type: string
+            openunison_network_configuration:
+              type: object
+              properties:
+                force_to_lower_case:
+                  type: boolean
+                open_port:
+                  type: integer
+                open_external_port:
+                  type: integer
+                secure_port:
+                  type: integer
+                secure_external_port:
+                  type: integer
+                force_to_secure:
+                  type: boolean
+                activemq_dir:
+                  type: string
+                client_auth:
+                  type: string
+                allowed_client_names:
+                  type: array
+                  items:
+                    type: string
+                ciphers:
+                  type: array
+                  items:
+                   type: string
+                path_to_deployment:
+                  type: string
+                path_to_env_file:
+                  type: string
+                secure_key_alias:
+                  type: string
+                allowed_tls_protocols:
+                  type: array
+                  items:
+                    type: string
+                quartz_dir:
+                  type: string
+                context_root:
+                  type: string
+                disable_http2:
+                  type: boolean
+                allow_un_escaped_chars:
+                  type: string
+                welecome_pages:
+                  type: array
+                  items:
+                    type: string
+                error_pages:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      code:
+                        type: integer
+                      location:
+                        type: string
+                redirect_to_context_root:
+                  type: boolean
+            saml_remote_idp:
+              type: array
+              items:
+                type: object
+                properties:
+                  source:
+                    type: object
+                    properties:
+                      url:
+                        type: string
+                      xml:
+                        type: string
+                  mapping:
+                    type: object
+                    properties:
+                      entity_id:
+                        type: string
+                      post_url:
+                        type: string
+                      redirect_url:
+                        type: string
+                      logout_url:
+                        type: string
+                      signing_cert_alis:
+                        type: string
+                      encryption_cert_alias:
+                        type: string
+            run_sql:
+              type: string
+            key_store:
+              type: object
+              properties:
+                update_controller:
+                  type: object
+                  properties:
+                    image:
+                      type: string
+                    schedule:
+                      type: string
+                    days_to_expire:
+                      type: integer
+                static_keys:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      version:
+                        type: integer
+                trusted_certificates:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      pem_data:
+                        type: string
+                key_pairs:
+                  type: object
+                  properties:
+                    create_keypair_template:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          value:
+                            type: string
+                    keys:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          tls_secret_name:
+                            type: string
+                          import_into_ks:
+                            type: string
+                            enum:
+                            - keypair
+                            - certificate
+                            - none
+                          replace_if_exists:
+                            type: boolean
+                          create_data:
+                            type: object
+                            properties:
+                              sign_by_k8s_ca:
+                                type: boolean
+                              server_name:
+                                type: string
+                              subject_alternative_names:
+                                type: array
+                                items:
+                                  type: string
+                              key_size:
+                                type: integer
+                              ca_cert:
+                                type: boolean
+                              delete_pods_labels:
+                                type: array
+                                items:
+                                  type: string
+                              secret_info:
+                                type: object
+                                properties:
+                                  type_of_secret:
+                                    type: string
+                                  cert_name:
+                                    type: string
+                                  key_name:
+                                    type: string
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: openunison-orchestra-cluster-administrators
+subjects:
+- kind: Group
+  name: k8s-cluster-administrators
+  apiGroup: rbac.authorization.k8s.io
+- kind: ServiceAccount
+  name: openunison-orchestra
+  namespace: openunison
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: list-namespaces
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - namespaces
+  verbs:
+  - list
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: openunison-cluster-list-namespaces
+subjects:
+- kind: Group
+  name: users
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: list-namespaces
+  apiGroup: rbac.authorization.k8s.io
+
+                  
+                
+                    

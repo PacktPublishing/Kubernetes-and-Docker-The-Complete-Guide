@@ -1,0 +1,52 @@
+apiVersion: apps/v1beta2 # for versions before 1.8.0 use apps/v1beta1
+kind: Deployment
+metadata:
+  name: openunison-deployment
+  labels:
+    app: openunison
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: openunison
+  template:
+    metadata:
+      labels:
+        app: openunison
+    spec:
+      containers:
+      - name: openunison
+        image: 192.168.56.1:5000/tremolosecurity/openunison-k8s
+        imagePullPolicy: Always
+        volumeMounts:
+        - name: secret-volume
+          mountPath: "/etc/openunison"
+          readOnly: true
+        livenessProbe:
+          exec:
+            command:
+            - "/usr/local/openunison/bin/check_alive.py"
+          initialDelaySeconds: 30
+          timeoutSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - "/usr/local/openunison/bin/check_alive.py"
+            - "https://127.0.0.1:8443/auth/idp/k8sIdp/.well-known/openid-configuration"
+            - "issuer"
+          initialDelaySeconds: 30
+          timeoutSeconds: 10
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        - name: https
+          containerPort: 8443
+          protocol: TCP
+        env:
+        - name: JAVA_OPTS
+          value: "-Djava.awt.headless=true -Djava.security.egd=file:/dev/./urandom -DunisonEnvironmentFile=/etc/openunison/ou.env"
+      volumes:
+      - name: secret-volume
+        secret:
+          secretName: openunison-secrets

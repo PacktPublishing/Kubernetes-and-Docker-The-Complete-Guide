@@ -1,0 +1,222 @@
+{
+    "kind": "Template",
+    "apiVersion": "v1",
+    "metadata": {
+        "annotations": {
+            "iconClass": "icon-eap",
+            "tags": "openunison,identity management,sso,saml,openidconnect,user management",
+            "version": "1.0.12",
+            "openshift.io/display-name": "OpenUnison 1.0.12",
+            "openshift.io/provider-display-name": "Tremolo Security, Inc.",
+            "description": "Deploy OpenUnison using a prebuilt image",
+            "template.openshift.io/long-description": "This template describes the objects needed to deploy OpenUnison on OpenShift with https using a pre-built image",
+            "template.openshift.io/documentation-url": "https://github.com/TremoloSecurity/openunison-qs-openshift",
+            "template.openshift.io/support-url": "https://github.com/TremoloSecurity/openunison-qs-openshift"
+        },
+        "name": "openunison-https-bin"
+    },
+    "labels": {
+        "template": "openunison-https-bin",
+        "xpaas": "1.0.12"
+    },
+    "message": "A new OpenUnison instance has been deployed.  You can access it by pointing your browser at https://${HOSTNAME_HTTPS}/.  Make sure you have created the ou_secret with your ou.env file, unisonKeystore.jks and openunison.yaml",
+    "parameters": [
+        {
+            "displayName": "Application Name",
+            "description": "The name for the application.",
+            "name": "APPLICATION_NAME",
+            "value": "openunison",
+            "required": true
+        },
+        {
+            "displayName": "Custom https Route Hostname",
+            "description": "Custom hostname for https service route.  Leave blank for default hostname, e.g.: secure-<application-name>-<project>.<default-domain-suffix>",
+            "name": "HOSTNAME_HTTPS",
+            "value": "",
+            "required": false
+        },
+        {
+            "displayName": "ImageStream Namespace",
+            "description": "Namespace in which the ImageStreams for OpenUnison images are installed. These ImageStreams are normally installed in the openunison namespace. You should only need to modify this if you've installed the ImageStreams in a different namespace/project.",
+            "name": "IMAGE_STREAM_NAMESPACE",
+            "value": "openunison",
+            "required": true
+        }
+
+    ],
+    "objects": [
+
+        {
+            "kind": "Service",
+            "apiVersion": "v1",
+            "spec": {
+                "ports": [
+                    {
+                        "port": 443,
+                        "targetPort": 8443,
+                        "name":"secure"
+                    }
+                ],
+                "selector": {
+                    "deploymentConfig": "${APPLICATION_NAME}"
+                }
+            },
+            "metadata": {
+                "name": "secure-${APPLICATION_NAME}",
+                "labels": {
+                    "application": "${APPLICATION_NAME}"
+                },
+                "annotations": {
+                    "description": "OpenUnison's https port."
+                }
+            }
+        },
+
+        {
+            "kind": "Route",
+            "apiVersion": "v1",
+            "id": "${APPLICATION_NAME}-https",
+            "metadata": {
+                "name": "secure-${APPLICATION_NAME}",
+                "labels": {
+                    "application": "${APPLICATION_NAME}"
+                },
+                "annotations": {
+                    "description": "Route for OpenUnison's https service."
+                }
+            },
+            "spec": {
+                "host": "${HOSTNAME_HTTPS}",
+                "to": {
+                    "kind":"Service",
+                    "name": "secure-${APPLICATION_NAME}"
+                },
+                "port" : {
+                  "targetPort":"secure"
+                },
+                "tls": {
+                    "termination": "passthrough"
+                }
+            }
+        },
+        {
+            "kind": "ImageStream",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}",
+                "labels": {
+                    "application": "${APPLICATION_NAME}"
+                }
+            }
+        },
+
+        {
+            "kind": "DeploymentConfig",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}",
+                "labels": {
+                    "application": "${APPLICATION_NAME}"
+                }
+            },
+            "spec": {
+                "strategy": {
+                    "type": "Recreate"
+                },
+                "triggers": [
+                    {
+                        "type": "ImageChange",
+                        "imageChangeParams": {
+                            "automatic": true,
+                            "containerNames": [
+                                "${APPLICATION_NAME}"
+                            ],
+                            "from": {
+                                "kind": "ImageStreamTag",
+                                "name": "${APPLICATION_NAME}:latest"
+                            }
+                        }
+                    },
+                    {
+                        "type": "ConfigChange"
+                    }
+                ],
+                "replicas": 1,
+                "selector": {
+                    "deploymentConfig": "${APPLICATION_NAME}"
+                },
+                "template": {
+                    "metadata": {
+                        "name": "${APPLICATION_NAME}",
+                        "labels": {
+                            "deploymentConfig": "${APPLICATION_NAME}",
+                            "application": "${APPLICATION_NAME}"
+                        }
+                    },
+                    "spec": {
+                        "terminationGracePeriodSeconds": 60,
+                        "containers": [
+                            {
+                                "name": "${APPLICATION_NAME}",
+                                "image": "${APPLICATION_NAME}",
+                                "imagePullPolicy": "Always",
+                                "volumeMounts": [
+                                  {
+                                    "name": "secret-volume",
+                                    "mountPath": "/etc/openunison",
+                                    "readOnly": true
+                                  }
+                                ],
+                                "livenessProbe": {
+                                  "exec": {
+                                    "command": [
+                                      "/usr/local/openunison/bin/check_alive.py"
+                                    ]
+                                  },
+                                  "initialDelaySeconds":30,
+                                  "timeoutSeconds":10
+                                },
+                                "readinessProbe": {
+                                  "exec": {
+                                    "command": [
+                                      "/usr/local/openunison/bin/check_alive.py"
+                                    ]
+                                  },
+                                  "initialDelaySeconds":30,
+                                  "timeoutSeconds":10
+                                },
+                                "ports": [
+
+                                    {
+                                        "name": "http",
+                                        "containerPort": 8080,
+                                        "protocol": "TCP"
+                                    },
+                                    {
+                                        "name": "https",
+                                        "containerPort": 8443,
+                                        "protocol": "TCP"
+                                    }
+                                ],
+                                "env": [
+                                  {
+                                    "name": "JAVA_OPTS",
+                                    "value": "-Djava.awt.headless=true -Djava.security.egd=file:/dev/./urandom -DunisonEnvironmentFile=/etc/openunison/ou.env"
+                                  }
+                                ]
+                            }
+                        ],
+                        "volumes": [
+                          {
+                            "name": "secret-volume",
+                            "secret": {
+                              "secretName": "openunison-secrets"
+                            }
+                          }
+                        ]
+                    }
+                }
+            }
+        }
+    ]
+}

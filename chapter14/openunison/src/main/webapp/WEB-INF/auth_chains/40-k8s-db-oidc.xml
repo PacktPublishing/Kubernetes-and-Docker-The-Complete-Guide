@@ -1,0 +1,46 @@
+<chain level="20" name="k8s-db-oidc">
+<authMech>
+  <name>oidc</name>
+  <required>required</required>
+  <params>
+      <param name="bearerTokenName" value="k8s-ou" />
+      <!-- The client_id supplied by the OP -->
+      <param name="clientid" value="openunison" />
+      <!-- The client_secret supplied by the OP -->
+      <param name="secretid" value="#[K8S_DB_SECRET]" />
+      <!-- What to request from the OP -->
+      <param name="responseType" value="code" />
+      <!-- The authentication request url of the OP -->
+      <param name="idpURL" value="https://#[OU_HOST]/auth/idp/k8sIdp/auth" />
+      <!-- The URL to load the token from -->
+      <param name="loadTokenURL" value="https://#[OU_HOST]/auth/idp/k8sIdp/token" />
+      <!-- Claims to request from the OP -->
+      <param name="scope" value="openid name offline" />
+      <!-- If true, the mechanism will attempt to find the user inside of OpenUnison's internal virtual directory -->
+      <param name="linkToDirectory" value="true" />
+      <!-- If a user isn't matched in the virtual directory, ou to be assigned to -->
+      <param name="noMatchOU" value="oidc" />
+      <!-- How to lookup a user.  use ${claim_name} to include a claim from the user's id_token in the search -->
+      <param name="lookupFilter" value="(uid=${sub})" />
+      <!-- If the user's object isn't matched in the virtual directory, the objectClass to assign -->
+      <param name="defaultObjectClass" value="inetOrgPerson" />
+      <!-- The name of the attribute in the id_token that identifies the user -->
+      <param name="uidAttr" value="sub" />
+      <!-- Optional - If you want to limit which user domains to authenticate by the OP, specify that domain here -->
+      <param name="hd" value="" />
+      <!-- Implementation of com.tremolosecurity.unison.proxy.auth.openidconnect.sdk.LoadUserData -->
+      <param name="userLookupClassName" value="com.tremolosecurity.unison.proxy.auth.openidconnect.loadUser.LoadJWTFromAccessToken" />
+      <param name="jwtTokenAttributeName" value="id_token" />
+
+     </params>
+</authMech>
+<authMech>
+    <name>genoidctoken</name>
+    <required>required</required>
+    <params>
+      <param name="idpName" value="k8sIdp" />
+      <param name="trustName" value="kubernetes" />
+      <param name="overrideURL" value="https://#[OU_HOST]/auth/idp/k8sIdp" />
+    </params>
+  </authMech>
+</chain> 

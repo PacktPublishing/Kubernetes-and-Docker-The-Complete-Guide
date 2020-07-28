@@ -1,0 +1,36 @@
+<application name="apiserver" azTimeoutMillis="30000"  useWhen="K8S_IMPERSONATION=true"  >
+        <urls>
+          <url regex="false" authChain="oauth2jwt" overrideHost="true" overrideReferer="true">
+            <host>#[K8S_API_HOST]</host>
+            <filterChain>
+                <filter class="com.tremolosecurity.proxy.filters.K8sInjectImpersonation">
+                    <param name="targetName" value="k8s" />
+                    <param name="userNameAttribute" value="sub" />
+                    <param name="useLdapGroups" value="false" />
+                    <param name="groupAttribute" value="groups" />
+                </filter>
+            </filterChain>
+            <uri>/</uri>
+            <proxyTo>${k8s_url}${fullURI}</proxyTo>>
+            <results>
+              <azSuccess>
+              </azSuccess>
+            </results>
+            <azRules>
+              <rule scope="dn" constraint="o=Tremolo" />
+            </azRules>
+          </url>
+      
+        </urls>
+        <cookieConfig>
+          <sessionCookieName>anon</sessionCookieName>
+          <domain>#[K8S_API_HOST]</domain>
+          <logoutURI>/</logoutURI>
+          <keyAlias>session-unison</keyAlias>
+          <secure>true</secure>
+          <httpOnly>true</httpOnly>
+          <timeout>1</timeout>
+          <scope>-1</scope>
+        </cookieConfig>
+      </application>
+      

@@ -1,0 +1,12 @@
+<mechanism name="anonymous">
+  <uri>/auth/anon</uri>
+  <className>com.tremolosecurity.proxy.auth.AnonAuth</className>
+  <init>
+    <!-- The RDN of unauthenticated users -->
+    <param name="userName" value="uid=Anonymous"/>
+    <!-- Any number of attributes can be added to the anonymous user -->
+    <param name="role" value="Users" />
+  </init>
+  <params>
+  </params>
+</mechanism>

@@ -1,0 +1,8 @@
+<mechanism name="acknowledge">
+  <uri>/auth/acknowledge</uri>
+  <className>com.tremolosecurity.proxy.auth.AcknowledgeAuthMech</className>
+  <init>
+  </init>
+  <params>
+  </params>
+</mechanism>

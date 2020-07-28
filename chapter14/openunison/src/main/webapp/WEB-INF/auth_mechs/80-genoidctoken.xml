@@ -1,0 +1,7 @@
+<mechanism name="genoidctoken">
+  <uri>/auth/oidctoken</uri>
+  <className>com.tremolosecurity.proxy.auth.GenerateOIDCTokens</className>
+  <init>
+  </init>
+  <params />
+</mechanism>

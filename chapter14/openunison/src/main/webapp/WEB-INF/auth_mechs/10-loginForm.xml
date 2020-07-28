@@ -1,0 +1,9 @@
+<mechanism name="loginForm">
+  <uri>/auth/formLogin</uri>
+  <className>com.tremolosecurity.proxy.auth.FormLoginAuthMech</className>
+  <init>
+  </init>
+  <params>
+    <param>FORMLOGIN_JSP</param>
+  </params>
+</mechanism>

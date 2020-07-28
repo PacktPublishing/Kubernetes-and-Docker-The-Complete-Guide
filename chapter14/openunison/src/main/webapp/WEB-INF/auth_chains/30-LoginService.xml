@@ -1,0 +1,12 @@
+<chain level="20" name="LoginService">
+<authMech>
+  <name>LoginService</name>
+  <required>required</required>
+  <params>
+    <param name="chains" value="ActiveDirectory=/login/ldap" />
+    <param name="serviceUrl" value="/auth/forms/chooseLogin.jsp" />
+    <param name="cookieName" value="tremoloLoginChoice"/>
+    <param name="cookieDays" value="30" />
+  </params>
+</authMech>
+</chain>

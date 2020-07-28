@@ -1,0 +1,7 @@
+<resultGroup name="oauth2bearer">
+  <result>
+    <type>header</type>
+    <source>custom</source>
+    <value>Authorization=com.tremolosecurity.proxy.results.InjectIdToken</value>
+  </result>
+</resultGroup>

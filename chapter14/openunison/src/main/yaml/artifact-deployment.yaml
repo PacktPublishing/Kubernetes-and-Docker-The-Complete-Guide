@@ -1,0 +1,523 @@
+---
+apiVersion: v1
+data:
+  deploy.js: "//    Copyright 2018 Tremolo Security, Inc.\n// \n//    Licensed under\
+    \ the Apache License, Version 2.0 (the \"License\");\n//    you may not use this\
+    \ file except in compliance with the License.\n//    You may obtain a copy of\
+    \ the License at\n// \n//        http://www.apache.org/licenses/LICENSE-2.0\n\
+    // \n//    Unless required by applicable law or agreed to in writing, software\n\
+    //    distributed under the License is distributed on an \"AS IS\" BASIS,\n//\
+    \    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n\
+    //    See the License for the specific language governing permissions and\n//\
+    \    limitations under the License.\n\nprint(\"Loading CertUtils\");\nvar CertUtils\
+    \ = Java.type(\"com.tremolosecurity.kubernetes.artifacts.util.CertUtils\");\n\
+    var NetUtil = Java.type(\"com.tremolosecurity.kubernetes.artifacts.util.NetUtil\"\
+    );\n\nprint(\"Creating openunison keystore\");\n\nk8sDashboardNamespace = \"kube-system\"\
+    ;\n\nif (nonSecretInProp['K8S_DASHBOARD_NAMESPACE'] != null) {\n    print(\"Getting\
+    \ k8s dashboard namespace from the configuration\");\n    k8sDashboardNamespace\
+    \ = nonSecretInProp['K8S_DASHBOARD_NAMESPACE'];\n}\n\n\nksPassword = inProp['unisonKeystorePassword'];\n\
+    ouKs = Java.type(\"java.security.KeyStore\").getInstance(\"PKCS12\");\nouKs.load(null,ksPassword.toCharArray());\n\
+    \nuse_k8s_cm = nonSecretInProp['USE_K8S_CM'] == \"true\";\n\n\ninProp['K8S_DB_SECRET']\
+    \ = java.util.UUID.randomUUID().toString();\n\nvar docker_image = 'docker.io/tremolosecurity/openunison-k8s-saml2:latest';\n\
+    \nif (nonSecretInProp['image'] != null) {\n  docker_image = nonSecretInProp['image'];\n\
+    \  delete nonSecretInProp['image'];\n}\n\nvar amq_image = 'docker.io/tremolosecurity/activemq-docker:latest';\n\
+    \nif (nonSecretInProp['amqimage'] != null) {\n  amq_image = nonSecretInProp['amqimage'];\n\
+    \  delete nonSecretInProp['amqimage'];\n}\n\n\nprint(\"Runing kubectl create\"\
+    );\nk8s.kubectlCreate(deploymentTemplate);\nprint(\"kubectl complete\");\n\n\n\
+    print(\"pulling quartz sql\");\nquartzSQL = com.tremolosecurity.kubernetes.artifacts.util.NetUtil.downloadFile(\"\
+    file:///etc/input-maps/quartz.sql\");\n\n\n\nou_cr = {\n  \"apiVersion\": \"openunison.tremolo.io/v1\"\
+    ,\n  \"kind\": \"OpenUnison\",\n  \"metadata\": {\n      \"name\": \"orchestra\"\
+    \n  },\n  \"spec\": {\n      \"dest_secret\": \"orchestra\",\n      \"enable_activemq\"\
+    : true,\n      \"activemq_image\": amq_image,\n      \"run_sql\":quartzSQL,\n\
+    \      \"hosts\": [\n          {\n              \"ingress_name\": \"openunison\"\
+    ,\n              \"names\": [\n                  {\n                      \"env_var\"\
+    : \"OU_HOST\",\n                      \"name\": nonSecretInProp['OU_HOST']\n \
+    \                 },\n                  {\n                    \"env_var\":\"\
+    K8S_DASHBOARD_HOST\",\n                    \"name\": nonSecretInProp['K8S_DASHBOARD_HOST']\n\
+    \                  }\n              ],\n              \"secret_name\":\"ou-tls-certificate\"\
+    \n          }\n      ],\n      \"key_store\": {\n        \"update_controller\"\
+    :{\n          \"image\" : \"docker.io/tremolosecurity/kubernetes-artifact-deployment:1.1.0\"\
+    ,\n          \"schedule\" : \"0 2 * * *\",\n          \"days_to_expire\" : 10\n\
+    \        },\n        \"key_pairs\" : {\n          \"create_keypair_template\"\
+    : [\n            {\n                \"name\": \"ou\",\n                \"value\"\
+    : nonSecretInProp['OU_CERT_OU']\n            },\n            {\n             \
+    \   \"name\": \"o\",\n                \"value\": nonSecretInProp['OU_CERT_O']\n\
+    \            },\n            {\n                \"name\": \"l\",\n           \
+    \     \"value\": nonSecretInProp['OU_CERT_L']\n            },\n            {\n\
+    \                \"name\": \"st\",\n                \"value\": nonSecretInProp['OU_CERT_ST']\n\
+    \            },\n            {\n                \"name\": \"c\",\n           \
+    \     \"value\": nonSecretInProp['OU_CERT_C']\n            }\n          ],\n \
+    \         \"keys\" : []\n        },\n        \"static_keys\":[],\n        \"trusted_certificates\"\
+    :[]\n      },\n      \"non_secret_data\":[],\n      \"openunison_network_configuration\"\
+    : {\n        \"activemq_dir\": \"/tmp/amq\",\n        \"allowed_client_names\"\
+    : [],\n        \"ciphers\": [\n            \"TLS_RSA_WITH_RC4_128_SHA\",\n   \
+    \         \"TLS_RSA_WITH_AES_128_CBC_SHA\",\n            \"TLS_RSA_WITH_AES_256_CBC_SHA\"\
+    ,\n            \"TLS_RSA_WITH_3DES_EDE_CBC_SHA\",\n            \"TLS_RSA_WITH_AES_128_CBC_SHA256\"\
+    ,\n            \"TLS_RSA_WITH_AES_256_CBC_SHA256\"\n        ],\n        \"client_auth\"\
+    : \"none\",\n        \"force_to_secure\": true,\n        \"open_external_port\"\
+    : 80,\n        \"open_port\": 8080,\n        \"path_to_deployment\": \"/usr/local/openunison/work\"\
+    ,\n        \"path_to_env_file\": \"/etc/openunison/ou.env\",\n        \"quartz_dir\"\
+    : \"/tmp/quartz\",\n        \"secure_external_port\": 443,\n        \"secure_key_alias\"\
+    : \"unison-tls\",\n        \"secure_port\": 8443\n    },\n    \"replicas\": 1,\n\
+    \    \"secret_data\": [],\n    \"source_secret\": \"orchestra-secrets-source\"\
+    ,\n    \"image\": docker_image\n  }\n};\n\nou_cr.spec['saml_remote_idp'] = [\n\
+    \  {\n    \"mapping\": {\n      \"encryption_cert_alias\": \"idp-saml2-enc\",\n\
+    \      \"entity_id\": \"IDP_ENTITY_ID\",\n      \"logout_url\": \"IDP_LOGOUT\"\
+    ,\n      \"post_url\": \"IDP_POST\",\n      \"redirect_url\": \"IDP_REDIR\",\n\
+    \      \"signing_cert_alias\": \"idp-saml2-sig\"\n    },\n    \"source\": {\n\
+    \      \n    }\n  }\n];\n\nif (nonSecretInProp['SAML2_IDP_METADATA_URL'] != null)\
+    \ {\n  ou_cr.spec.saml_remote_idp[0].source.url = nonSecretInProp['SAML2_IDP_METADATA_URL'];\n\
+    \  delete nonSecretInProp['SAML2_IDP_METADATA_URL'];\n} else {\n  xmlMetadata\
+    \ = NetUtil.downloadFile('file://' + configMapsDir + '/saml2-metadata.xml');\n\
+    \  ou_cr.spec.saml_remote_idp[0].source.xml = xmlMetadata;\n}\n\n\n\nprint(\"\
+    Generating openunison tls certificate\");\n\noutls = {\n  \"create_data\" : {\n\
+    \    \"ca_cert\":true,\n    \"key_size\":2048,\n    \"server_name\":\"openunison.openunison.svc.cluster.local\"\
+    ,\n    \"sign_by_k8s_ca\":use_k8s_cm,\n    \"subject_alternative_names\":[]\n\
+    \  },\n  \"import_into_ks\" : \"keypair\",\n  \"name\": \"unison-tls\"\n\n};\n\
+    \nou_cr.spec.key_store.key_pairs.keys.push(outls);\n\n\noutls = {\n  \"create_data\"\
+    \ : {\n    \"ca_cert\":true,\n    \"key_size\":2048,\n    \"server_name\":nonSecretInProp['OU_HOST'],\n\
+    \    \"sign_by_k8s_ca\":false,\n    \"subject_alternative_names\":[\n      nonSecretInProp['K8S_DASHBOARD_HOST']\n\
+    \    ]\n  },\n  \"import_into_ks\" : \"certificate\",\n  \"name\": \"unison-ca\"\
+    ,\n  \"tls_secret_name\":\"ou-tls-certificate\"\n\n};\n\nou_cr.spec.key_store.key_pairs.keys.push(outls);\n\
+    \nprint(\"Generating the dashboard certificate\");\n\noutls = {\n  \"create_data\"\
+    \ : {\n    \"ca_cert\":(! use_k8s_cm),\n    \"key_size\":2048,\n    \"server_name\"\
+    :\"kubernetes-dashboard.\" + k8sDashboardNamespace + \".svc.cluster.local\",\n\
+    \    \"sign_by_k8s_ca\":use_k8s_cm,\n    \"subject_alternative_names\":[],\n \
+    \   \"target_namespace\": k8sDashboardNamespace,\n    \"secret_info\":{\n    \
+    \  \"type_of_secret\":\"Opaque\",\n      \"cert_name\":\"dashboard.crt\",\n  \
+    \    \"key_name\":\"dashboard.key\"\n      \n    },\n    \"delete_pods_labels\"\
+    \ : [\"k8s-app=kubernetes-dashboard\"]\n  },\n  \"import_into_ks\" : (use_k8s_cm\
+    \ ? \"none\" : \"certificate\"),\n  \"name\": \"kubernetes-dashboard\",\n  \"\
+    tls_secret_name\":\"kubernetes-dashboard-certs\",\n  \"replace_if_exists\": true\n\
+    \  \n\n};\n\nou_cr.spec.key_store.key_pairs.keys.push(outls);\n\nprint(\"Generating\
+    \ the dashboard certificate\");\n\noutls = {\n  \"create_data\" : {\n    \"ca_cert\"\
+    :(! use_k8s_cm),\n    \"key_size\":2048,\n    \"server_name\":\"amq.openunison.svc.cluster.local\"\
+    ,\n    \"sign_by_k8s_ca\":use_k8s_cm,\n    \"subject_alternative_names\":[]\n\
+    \  },\n  \"import_into_ks\" : (use_k8s_cm ? \"none\" : \"certificate\"),\n  \"\
+    name\": \"amq-server\",\n  \"tls_secret_name\":\"orchestra-amq-server\",\n  \"\
+    replace_if_exists\": true\n  \n\n};\n\nou_cr.spec.key_store.key_pairs.keys.push(outls);\n\
+    \nprint(\"Generating amq client tls certificate\");\n\noutls = {\n  \"create_data\"\
+    \ : {\n    \"ca_cert\":true,\n    \"key_size\":2048,\n    \"server_name\":\"amq--client\"\
+    ,\n    \"sign_by_k8s_ca\":false,\n    \"subject_alternative_names\":[]\n  },\n\
+    \  \"import_into_ks\" : \"keypair\",\n  \"name\": \"amq-client\",\n  \"tls_secret_name\"\
+    :\"orchestra-amq-client\"\n\n};\n\nou_cr.spec.key_store.key_pairs.keys.push(outls);\n\
+    \n\nprint(\"Saving certificate to keystore\");\n\nou_cr.spec.key_store.static_keys.push({\n\
+    \  \"name\":\"session-unison\",\n  \"version\":1\n});\n\nou_cr.spec.key_store.static_keys.push({\n\
+    \  \"name\":\"lastmile-oidc\",\n  \"version\":1\n});\n\n\n\nprint(\"Generating\
+    \ OIDC Certificate\");\n\noutls = {\n  \"create_data\" : {\n    \"ca_cert\":true,\n\
+    \    \"key_size\":2048,\n    \"server_name\":\"unison-saml2-rp-sig\",\n    \"\
+    sign_by_k8s_ca\":false,\n    \"subject_alternative_names\":[]\n  },\n  \"import_into_ks\"\
+    \ : \"keypair\",\n  \"name\": \"unison-saml2-rp-sig\"\n\n};\n\nou_cr.spec.key_store.key_pairs.keys.push(outls);\n\
+    \n\n\nouNS = {\n    \"apiVersion\":\"v1\",\n    \"kind\":\"Namespace\",\n    \"\
+    metadata\":{\n        \"creationTimestamp\":null,\n        \"name\":\"openunison\"\
+    \n    },\n    \"spec\":{},\n    \"status\":{}\n};\n\nk8s.postWS('/api/v1/namespaces',JSON.stringify(ouNS));\n\
+    \nprint(\"Create operator rbac policies\");\n\nk8s_obj = {\n  \"apiVersion\":\
+    \ \"rbac.authorization.k8s.io/v1\",\n  \"kind\": \"Role\",\n  \"metadata\": {\n\
+    \    \"name\": \"openunison-operator-role\"\n  },\n  \"rules\": [\n    {\n   \
+    \   \"apiGroups\": [\n        \"openunison.tremolo.io\",\n        \"\",\n    \
+    \    \"apps\",\n        \"rbac.authorization.k8s.io\",\n        \"extensions\"\
+    ,\n        \"apps.openshift.io\",\n        \"build.openshift.io\",\n        \"\
+    image.openshift.io\",\n        \"route.openshift.io\",\n        \"user.openshift.io\"\
+    ,\n        \"batch\"\n      ],\n      \"resources\": [\n        \"routes/custom-host\"\
+    ,\n        \"imagestreamimports\",\n        \"users\",\n        \"groups\",\n\
+    \        \"routes\",\n        \"images\",\n        \"imagestreams\",\n       \
+    \ \"builds\",\n        \"buildconfigs\",\n        \"deploymentconfigs\",\n   \
+    \     \"openunisons\",\n        \"openunisons/status\",\n        \"pods\",\n \
+    \       \"deployments\",\n        \"secrets\",\n        \"configmaps\",\n    \
+    \    \"services\",\n        \"serviceaccounts\",\n        \"roles\",\n       \
+    \ \"rolebindings\",\n        \"ingresses\",\n        \"cronjobs\"\n      ],\n\
+    \      \"verbs\": [\n        \"*\"\n      ]\n    }\n  ]\n};\n\n\n\nk8s.postWS('/apis/rbac.authorization.k8s.io/v1/namespaces/openunison/roles',JSON.stringify(k8s_obj));\n\
+    \nprint(\"Creating rbac binding\");\n\nk8s_obj = {\n  \"apiVersion\": \"rbac.authorization.k8s.io/v1\"\
+    ,\n  \"kind\": \"RoleBinding\",\n  \"metadata\": {\n    \"name\": \"openunison-operator-rolebinding\"\
+    \n  },\n  \"roleRef\": {\n    \"apiGroup\": \"rbac.authorization.k8s.io\",\n \
+    \   \"kind\": \"Role\",\n    \"name\": \"openunison-operator-role\"\n  },\n  \"\
+    subjects\": [\n    {\n      \"kind\": \"ServiceAccount\",\n      \"name\": \"\
+    openunison-operator\",\n      \"namespace\":\"openunison\"\n    }\n  ]\n};\n\n\
+    k8s.postWS('/apis/rbac.authorization.k8s.io/v1/namespaces/openunison/rolebindings',JSON.stringify(k8s_obj));\n\
+    \nprint(\"Creating the operator service account\");\n\nk8s_obj = {\n  \"apiVersion\"\
+    : \"v1\",\n  \"kind\": \"ServiceAccount\",\n  \"metadata\": {\n    \"name\": \"\
+    openunison-operator\"\n  }\n};\n\nk8s.postWS('/api/v1/namespaces/openunison/serviceaccounts',JSON.stringify(k8s_obj));\n\
+    \n\n\nobj = {\n    \"kind\": \"Role\",\n    \"apiVersion\": \"rbac.authorization.k8s.io/v1\"\
+    ,\n    \"metadata\": {\n        \"namespace\": k8sDashboardNamespace,\n      \
+    \  \"name\": \"orchestra-dashboard\"\n    },\n    \"rules\": [\n        {\n  \
+    \          \"apiGroups\": [\n                \"\"\n            ],\n          \
+    \  \"resources\": [\n                \"secrets\",\n                \"pods\"\n\
+    \            ],\n            \"verbs\": [\n                \"*\"\n           \
+    \ ]\n        }\n    ]\n};\n\nk8s.postWS('/apis/rbac.authorization.k8s.io/v1/namespaces/'\
+    \ + k8sDashboardNamespace + '/roles',JSON.stringify(obj));\n\nobj = {\n    \"\
+    kind\": \"RoleBinding\",\n    \"apiVersion\": \"rbac.authorization.k8s.io/v1\"\
+    ,\n    \"metadata\": {\n        \"name\": \"orchestra-dashboard\",\n        \"\
+    namespace\": k8sDashboardNamespace\n    },\n    \"subjects\": [\n        {\n \
+    \           \"kind\": \"ServiceAccount\",\n            \"name\": \"openunison-operator\"\
+    ,\n            \"namespace\": \"openunison\"\n        }\n    ],\n    \"roleRef\"\
+    : {\n        \"kind\": \"Role\",\n        \"name\": \"orchestra-dashboard\",\n\
+    \        \"apiGroup\": \"rbac.authorization.k8s.io\"\n    }\n};\n\nk8s.postWS('/apis/rbac.authorization.k8s.io/v1/namespaces/'\
+    \ + k8sDashboardNamespace + '/rolebindings',JSON.stringify(obj));\n\n\nobj = {\n\
+    \  \"kind\": \"ClusterRole\",\n  \"apiVersion\": \"rbac.authorization.k8s.io/v1\"\
+    ,\n  \"metadata\": {\n      \"name\": \"orchestra-certs\"\n  },\n  \"rules\":\
+    \ [\n      {\n          \"apiGroups\": [\n              \"certificates.k8s.io\"\
+    ,\n          ],\n          \"resources\": [\n              \"certificatesigningrequests\"\
+    ,\n              \"certificatesigningrequests/approval\"\n\n          ],\n   \
+    \       \"verbs\": [\n              \"*\"\n          ]\n      }\n  ]\n};\n\nk8s.postWS('/apis/rbac.authorization.k8s.io/v1/clusterroles',JSON.stringify(obj));\n\
+    \nobj = {\n  \"kind\": \"ClusterRoleBinding\",\n  \"apiVersion\": \"rbac.authorization.k8s.io/v1\"\
+    ,\n  \"metadata\": {\n      \"name\": \"orchestra-certs\"\n  },\n  \"subjects\"\
+    : [\n      {\n          \"kind\": \"ServiceAccount\",\n          \"name\": \"\
+    openunison-operator\",\n          \"namespace\": \"openunison\"\n      }\n  ],\n\
+    \  \"roleRef\": {\n      \"kind\": \"ClusterRole\",\n      \"name\": \"orchestra-certs\"\
+    ,\n      \"apiGroup\": \"rbac.authorization.k8s.io\"\n  }\n};\n\nk8s.postWS('/apis/rbac.authorization.k8s.io/v1/clusterrolebindings',JSON.stringify(obj));\n\
+    \n\n\nprint(\"Creating the operator deployment\");\n\nk8s_obj = {\n  \"apiVersion\"\
+    : \"apps/v1\",\n  \"kind\": \"Deployment\",\n  \"metadata\": {\n    \"labels\"\
+    : {\n      \"app\": \"openunison-operator\"\n    },\n    \"name\": \"openunison-operator\"\
+    \n  },\n  \"spec\": {\n    \"progressDeadlineSeconds\": 600,\n    \"replicas\"\
+    : 1,\n    \"revisionHistoryLimit\": 10,\n    \"selector\": {\n      \"matchLabels\"\
+    : {\n        \"app\": \"openunison-operator\"\n      }\n    },\n    \"strategy\"\
+    : {\n      \"rollingUpdate\": {\n        \"maxSurge\": \"25%\",\n        \"maxUnavailable\"\
+    : \"25%\"\n      },\n      \"type\": \"RollingUpdate\"\n    },\n    \"template\"\
+    : {\n      \"metadata\": {\n        \"creationTimestamp\": null,\n        \"labels\"\
+    : {\n          \"app\": \"openunison-operator\"\n        }\n      },\n      \"\
+    spec\": {\n        \"containers\": [\n          {\n            \"env\": [\n  \
+    \            {\n                \"name\": \"JAVA_OPTS\",\n                \"value\"\
+    : \"-Djava.awt.headless=true -Djava.security.egd=file:/dev/./urandom\"\n     \
+    \         },\n              {\n                \"name\": \"NAMESPACE\",\n    \
+    \            \"valueFrom\": {\n                  \"fieldRef\": {\n           \
+    \         \"fieldPath\": \"metadata.namespace\"\n                  }\n       \
+    \         }\n              },\n              {\n                \"name\":\"EXTRA_JS\"\
+    ,\n                \"value\":\"/usr/local/openunison/js-external\"\n         \
+    \     }\n            ],\n            \"image\": \"docker.io/tremolosecurity/openunison-k8s-operator\"\
+    ,\n            \"command\": [\n              \"java\",\n              \"-jar\"\
+    ,\n              \"/usr/local/openunison/javascript-operator.jar\",\n        \
+    \      \"-tokenPath\",\n              \"/var/run/secrets/kubernetes.io/serviceaccount/token\"\
+    ,\n              \"-rootCaPath\",\n              \"/var/run/secrets/kubernetes.io/serviceaccount/ca.crt\"\
+    ,\n              \"-kubernetesURL\",\n              \"https://kubernetes.default.svc.cluster.local\"\
+    ,\n              \"-namespace\",\n              \"NAMESPACE\",\n             \
+    \ \"-apiGroup\",\n              \"openunison.tremolo.io/v1\",\n              \"\
+    -objectType\",\n              \"openunisons\",\n              \"-jsPath\",\n \
+    \             \"/usr/local/openunison/js\",\n              \"-configMaps\",\n\
+    \              \"/etc/extraMaps\"\n            ],\n            \"imagePullPolicy\"\
+    : \"Always\",\n            \"name\": \"openunison-operator\",\n            \"\
+    resources\": {\n            },\n            \"terminationMessagePath\": \"/dev/termination-log\"\
+    ,\n            \"terminationMessagePolicy\": \"File\",\n            \"volumeMounts\"\
+    : [\n              {\n                \"mountPath\": \"/etc/extraMaps\",\n   \
+    \             \"name\": \"extra-maps\",\n                \"readOnly\": true\n\
+    \              }\n            ]\n          }\n        ],\n        \"dnsPolicy\"\
+    : \"ClusterFirst\",\n        \"restartPolicy\": \"Always\",\n        \"terminationGracePeriodSeconds\"\
+    : 30,\n        \"serviceAccount\": \"openunison-operator\",\n        \"volumes\"\
+    : [\n          {\n            \"name\": \"extra-maps\",\n            \"emptyDir\"\
+    : {\n            }\n          }\n        ]\n      }\n    }\n  }\n};\n\nk8s.postWS('/apis/apps/v1/namespaces/openunison/deployments',JSON.stringify(k8s_obj));\n\
+    \n//k8s.postWS('/apis/openunison.tremolo.io/v1/namespaces/openunison/openunisons',JSON.stringify(k8s_obj));\n\
+    \n\nprint(\"Create OpenUnison Source Secret\");\n\n\nouSecrets = {\n    \"apiVersion\"\
+    :\"v1\",\n    \"kind\":\"Secret\",\n    \"type\":\"Opaque\",\n    \"metadata\"\
+    : {\n        \"name\":\"orchestra-secrets-source\",\n        \"namespace\":\"\
+    openunison\"\n    },\n    \"data\":{\n      \n    }\n}\n\nfor each (var key in\
+    \ inProp.keySet()) {\n  \n    ouSecrets.data[key] =  java.util.Base64.getEncoder().encodeToString(inProp[key].getBytes(\"\
+    UTF-8\"));\n    ou_cr.spec.secret_data.push(key);\n  \n}\n\nk8s.postWS('/api/v1/namespaces/openunison/secrets',JSON.stringify(ouSecrets));\n\
+    \nprint(\"Adding non-secret properties to CR\");\n\nfor each (var key in nonSecretInProp.keySet())\
+    \ {\n  \n    ou_cr.spec.non_secret_data.push( {\n      \"name\": key,\n      \"\
+    value\": nonSecretInProp[key]\n    });\n  \n}\n\nprint(\"Adding trusted certs\
+    \ to the cr\");\n\nvar trusted_certs = k8s.getExtraCerts();\n\nfor each (var key\
+    \ in trusted_certs.keySet()) {\n  ou_cr.spec.key_store.trusted_certificates.push({\n\
+    \    \"name\" : key,\n    \"pem_data\" : trusted_certs[key]\n  });\n}\n\nprint(JSON.stringify(ou_cr));\n\
+    \n\nprint(\"Creating post deployment configmap\");\n\noidcFlags = \"--oidc-issuer-url=https://\"\
+    \ + nonSecretInProp[\"OU_HOST\"] + \"/auth/idp/k8sIdp\\n\" +\n            \"--oidc-client-id=kubernetes\\\
+    n\" +\n            \"--oidc-username-claim=sub\\n\" + \n            \"--oidc-groups-claim=groups\\\
+    n\" +\n            \"--oidc-ca-file=/etc/kubernetes/pki/ou-ca.pem\";\n\nprint(\"\
+    Runing kubectl create\");\nk8s.kubectlCreate(k8s.processTemplate(deploymentTemplate,inProp));\n\
+    print(\"kubectl complete\");\n\ncfgMap = {\n    \"apiVersion\":\"v1\",\n    \"\
+    kind\":\"ConfigMap\",\n    \"metadata\":{\n        \"name\":\"api-server-config\"\
+    ,\n        \"namespace\":\"openunison\"\n    },\n    \"data\":{\n        \"oidc-api-server-flags\"\
+    :oidcFlags\n    }\n};\n\nk8s.postWS('/api/v1/namespaces/openunison/configmaps',JSON.stringify(cfgMap));\n\
+    \n\nprint(\"Waiting for the OpenUnison operator to be deployed\");\n\nk8s.callWS('/api/v1/namespaces/openunison/pods?labelSelector=app%3Dopenunison-operator&limit=500',\"\
+    check_ws_response = (JSON.parse(ws_response_json).items[0].status.phase == 'Running')\
+    \ \",20);\n\n\n\nprint(\"Deploying the CR\");\n\nprint(k8s.postWS('/apis/openunison.tremolo.io/v1/namespaces/openunison/openunisons',JSON.stringify(ou_cr))[\"\
+    data\"]);\n\n\nprint(\"Deleting cluster role binding\");\nk8s.deleteWS('/apis/rbac.authorization.k8s.io/v1/clusterrolebindings/artifact-deployment');\n\
+    \nprint(\"Artifacts Created, to configure the API server run 'kubectl describe\
+    \ configmap api-server-config -n openunison'\");"
+  openunison.yaml: "---\napiVersion: apiextensions.k8s.io/v1beta1\nkind: CustomResourceDefinition\n\
+    metadata:\n  name: users.openunison.tremolo.io\nspec:\n  group: openunison.tremolo.io\n\
+    \  versions:\n    - name: v1\n      served: true\n      storage: true\n  version:\
+    \ v1\n  scope: Namespaced\n  names:\n    plural: users\n    singular: user\n \
+    \   kind: User\n    shortNames:\n    - usr\n  validation:\n   # openAPIV3Schema\
+    \ is the schema for validating custom objects.\n    openAPIV3Schema:\n      properties:\n\
+    \        spec:\n          properties:\n            sub:\n              type: string\n\
+    \            groups:\n              type: array\n              items:\n      \
+    \          type: string\n            first_name:\n              type: string\n\
+    \            last_name:\n              type: string\n            email:\n    \
+    \          type: string\n---\napiVersion: apiextensions.k8s.io/v1beta1\nkind:\
+    \ CustomResourceDefinition\nmetadata:\n  name: oidc-sessions.openunison.tremolo.io\n\
+    spec:\n  group: openunison.tremolo.io\n  versions:\n    - name: v1\n      served:\
+    \ true\n      storage: true\n  version: v1\n  scope: Namespaced\n  names:\n  \
+    \  plural: oidc-sessions\n    singular: oidc-session\n    kind: OidcSession\n\
+    \    shortNames:\n    - oidc\n  validation:\n   # openAPIV3Schema is the schema\
+    \ for validating custom objects.\n    openAPIV3Schema:\n      properties:\n  \
+    \      spec:\n          properties:\n            session_id:\n              type:\
+    \ string\n            client_id:\n              type: string\n            encrypted_id_token:\n\
+    \              type: string\n            encrypted_access_token:\n           \
+    \   type: string\n            expires:\n              type: string\n         \
+    \   user_dn:\n              type: string\n            refresh_token:\n       \
+    \       type: string\n---\nkind: Role\napiVersion: rbac.authorization.k8s.io/v1\n\
+    metadata:\n  namespace: openunison\n  name: oidc-user-sessions\nrules:\n- apiGroups:\
+    \ [\"openunison.tremolo.io\"]\n  resources: [\"oidc-sessions\",\"users\"]\n  verbs:\
+    \ [\"*\"]\n---\nkind: RoleBinding\napiVersion: rbac.authorization.k8s.io/v1\n\
+    metadata:\n  name: oidc-user-sessions\n  namespace: openunison\nsubjects:\n- kind:\
+    \ ServiceAccount\n  name: openunison-orchestra\n  namespace: openunison\nroleRef:\n\
+    \  kind: Role\n  name: oidc-user-sessions\n  apiGroup: rbac.authorization.k8s.io\n\
+    ---\napiVersion: apiextensions.k8s.io/v1beta1\nkind: CustomResourceDefinition\n\
+    metadata:\n  name: openunisons.openunison.tremolo.io\nspec:\n  group: openunison.tremolo.io\n\
+    \  versions:\n    - name: v1\n      served: true\n      storage: true\n  version:\
+    \ v1\n  scope: Namespaced\n  subresources:\n    status: {}\n  names:\n    plural:\
+    \ openunisons\n    singular: openunison\n    kind: OpenUnison\n    shortNames:\n\
+    \    - ou\n  validation:\n   # openAPIV3Schema is the schema for validating custom\
+    \ objects.\n    openAPIV3Schema:\n      properties:\n        spec:\n         \
+    \ properties:\n            image:\n              type: string\n            replicas:\n\
+    \              type: integer\n            enable_activemq:\n              type:\
+    \ boolean\n            activemq_image:\n              type: string\n         \
+    \   dest_secret:\n              type: string\n            source_secret:\n   \
+    \           type: string\n            secret_data:\n              type: array\n\
+    \              items:\n                type: string\n            openshift:\n\
+    \              type: object\n              properties:\n                git:\n\
+    \                  type: object\n                  properties:\n             \
+    \       repo:\n                      type: string\n                    branch:\
+    \ \n                      type: string\n                    dir:\n           \
+    \           type: string\n                builder_image:\n                  type:\
+    \ string\n            hosts:\n              type: array\n              items:\n\
+    \                type: object\n                properties:\n                 \
+    \ names:\n                    type: array\n                    items:\n      \
+    \                type: object\n                      properties:\n           \
+    \             name:\n                          type: string\n                \
+    \        env_var:\n                          type: string\n                  ingress_name:\
+    \ \n                    type: string\n                  secret_name:\n       \
+    \             type: string\n                  node_selectors:\n              \
+    \      type: array\n                    items:\n                      type: object\n\
+    \                      properties:\n                        name: \n         \
+    \                 type: string\n                        value:\n             \
+    \             type: string\n            non_secret_data:\n              type:\
+    \ array\n              items:\n                type: object\n                properties:\n\
+    \                  name:\n                    type: string\n                 \
+    \ value:\n                    type: string\n            openunison_network_configuration:\n\
+    \              type: object\n              properties:\n                force_to_lower_case:\n\
+    \                  type: boolean\n                open_port:\n               \
+    \   type: integer\n                open_external_port:\n                  type:\
+    \ integer\n                secure_port:\n                  type: integer\n   \
+    \             secure_external_port:\n                  type: integer\n       \
+    \         force_to_secure:\n                  type: boolean\n                activemq_dir:\n\
+    \                  type: string\n                client_auth:\n              \
+    \    type: string\n                allowed_client_names:\n                  type:\
+    \ array\n                  items:\n                    type: string\n        \
+    \        ciphers:\n                  type: array\n                  items:\n \
+    \                  type: string\n                path_to_deployment:\n       \
+    \           type: string\n                path_to_env_file:\n                \
+    \  type: string\n                secure_key_alias:\n                  type: string\n\
+    \                allowed_tls_protocols:\n                  type: array\n     \
+    \             items:\n                    type: string\n                quartz_dir:\n\
+    \                  type: string\n                context_root:\n             \
+    \     type: string\n                disable_http2:\n                  type: boolean\n\
+    \                allow_un_escaped_chars:\n                  type: string\n   \
+    \             welecome_pages:\n                  type: array\n               \
+    \   items:\n                    type: string\n                error_pages:\n \
+    \                 type: array\n                  items:\n                    type:\
+    \ object\n                    properties:\n                      code:\n     \
+    \                   type: integer\n                      location:\n         \
+    \               type: string\n                redirect_to_context_root:\n    \
+    \              type: boolean\n            saml_remote_idp:\n              type:\
+    \ array\n              items:\n                type: object\n                properties:\n\
+    \                  source:\n                    type: object\n               \
+    \     properties:\n                      url:\n                        type: string\n\
+    \                      xml:\n                        type: string\n          \
+    \        mapping:\n                    type: object\n                    properties:\n\
+    \                      entity_id:\n                        type: string\n    \
+    \                  post_url:\n                        type: string\n         \
+    \             redirect_url:\n                        type: string\n          \
+    \            logout_url:\n                        type: string\n             \
+    \         signing_cert_alis:\n                        type: string\n         \
+    \             encryption_cert_alias:\n                        type: string\n \
+    \           run_sql:\n              type: string\n            key_store:\n   \
+    \           type: object\n              properties:\n                update_controller:\n\
+    \                  type: object\n                  properties:\n             \
+    \       image:\n                      type: string\n                    schedule:\n\
+    \                      type: string\n                    days_to_expire:\n   \
+    \                   type: integer\n                static_keys:\n            \
+    \      type: array\n                  items:\n                    type: object\n\
+    \                    properties:\n                      name:\n              \
+    \          type: string\n                      version:\n                    \
+    \    type: integer\n                trusted_certificates:\n                  type:\
+    \ array\n                  items:\n                    type: object\n        \
+    \            properties:\n                      name:\n                      \
+    \  type: string\n                      pem_data:\n                        type:\
+    \ string\n                key_pairs:\n                  type: object\n       \
+    \           properties:\n                    create_keypair_template:\n      \
+    \                type: array\n                      items:\n                 \
+    \       type: object\n                        properties:\n                  \
+    \        name:\n                            type: string\n                   \
+    \       value:\n                            type: string\n                   \
+    \ keys:\n                      type: array\n                      items:\n   \
+    \                     type: object\n                        properties:\n    \
+    \                      name:\n                            type: string\n     \
+    \                     tls_secret_name:\n                            type: string\n\
+    \                          import_into_ks:\n                            type:\
+    \ string\n                            enum:\n                            - keypair\n\
+    \                            - certificate\n                            - none\n\
+    \                          replace_if_exists:\n                            type:\
+    \ boolean\n                          create_data:\n                          \
+    \  type: object\n                            properties:\n                   \
+    \           sign_by_k8s_ca:\n                                type: boolean\n \
+    \                             server_name:\n                                type:\
+    \ string\n                              subject_alternative_names:\n         \
+    \                       type: array\n                                items:\n\
+    \                                  type: string\n                            \
+    \  key_size:\n                                type: integer\n                \
+    \              ca_cert:\n                                type: boolean\n     \
+    \                         delete_pods_labels:\n                              \
+    \  type: array\n                                items:\n                     \
+    \             type: string\n                              secret_info:\n     \
+    \                           type: object\n                                properties:\n\
+    \                                  type_of_secret:\n                         \
+    \           type: string\n                                  cert_name:\n     \
+    \                               type: string\n                               \
+    \   key_name:\n                                    type: string\n---\nkind: ClusterRoleBinding\n\
+    apiVersion: rbac.authorization.k8s.io/v1\nmetadata:\n  name: openunison-orchestra-cluster-administrators\n\
+    subjects:\n- kind: Group\n  name: k8s-cluster-administrators\n  apiGroup: rbac.authorization.k8s.io\n\
+    - kind: ServiceAccount\n  name: openunison-orchestra\n  namespace: openunison\n\
+    roleRef:\n  kind: ClusterRole\n  name: cluster-admin\n  apiGroup: rbac.authorization.k8s.io\n\
+    ---\nkind: ClusterRole\napiVersion: rbac.authorization.k8s.io/v1\nmetadata:\n\
+    \  name: list-namespaces\nrules:\n- apiGroups:\n  - ''\n  resources:\n  - namespaces\n\
+    \  verbs:\n  - list\n---\nkind: ClusterRoleBinding\napiVersion: rbac.authorization.k8s.io/v1\n\
+    metadata:\n  name: openunison-cluster-list-namespaces\nsubjects:\n- kind: Group\n\
+    \  name: users\n  apiGroup: rbac.authorization.k8s.io\nroleRef:\n  kind: ClusterRole\n\
+    \  name: list-namespaces\n  apiGroup: rbac.authorization.k8s.io\n\n          \
+    \        \n                \n                    "
+  quartz.sql: "# By: Ron Cordell - roncordell\n#  I didn't see this anywhere, so I\
+    \ thought I'd post it here. This is the script from Quartz to create the tables\
+    \ in a MySQL database, modified to use INNODB instead of MYISAM.\n\n\n# make sure\
+    \ you have UTF-8 collaction for best .NET interoperability\n# CREATE DATABASE\
+    \ quartznet CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;\n\nDROP TABLE IF\
+    \ EXISTS QRTZ_FIRED_TRIGGERS;\nDROP TABLE IF EXISTS QRTZ_PAUSED_TRIGGER_GRPS;\n\
+    DROP TABLE IF EXISTS QRTZ_SCHEDULER_STATE;\nDROP TABLE IF EXISTS QRTZ_LOCKS;\n\
+    DROP TABLE IF EXISTS QRTZ_SIMPLE_TRIGGERS;\nDROP TABLE IF EXISTS QRTZ_SIMPROP_TRIGGERS;\n\
+    DROP TABLE IF EXISTS QRTZ_CRON_TRIGGERS;\nDROP TABLE IF EXISTS QRTZ_BLOB_TRIGGERS;\n\
+    DROP TABLE IF EXISTS QRTZ_TRIGGERS;\nDROP TABLE IF EXISTS QRTZ_JOB_DETAILS;\n\
+    DROP TABLE IF EXISTS QRTZ_CALENDARS;\n\nCREATE TABLE QRTZ_JOB_DETAILS(\nSCHED_NAME\
+    \ VARCHAR(120) NOT NULL,\nJOB_NAME VARCHAR(200) NOT NULL,\nJOB_GROUP VARCHAR(200)\
+    \ NOT NULL,\nDESCRIPTION VARCHAR(250) NULL,\nJOB_CLASS_NAME VARCHAR(250) NOT NULL,\n\
+    IS_DURABLE BOOLEAN NOT NULL,\nIS_NONCONCURRENT BOOLEAN NOT NULL,\nIS_UPDATE_DATA\
+    \ BOOLEAN NOT NULL,\nREQUESTS_RECOVERY BOOLEAN NOT NULL,\nJOB_DATA BLOB NULL,\n\
+    PRIMARY KEY (SCHED_NAME,JOB_NAME,JOB_GROUP))\nENGINE=InnoDB;\n\nCREATE TABLE QRTZ_TRIGGERS\
+    \ (\nSCHED_NAME VARCHAR(120) NOT NULL,\nTRIGGER_NAME VARCHAR(200) NOT NULL,\n\
+    TRIGGER_GROUP VARCHAR(200) NOT NULL,\nJOB_NAME VARCHAR(200) NOT NULL,\nJOB_GROUP\
+    \ VARCHAR(200) NOT NULL,\nDESCRIPTION VARCHAR(250) NULL,\nNEXT_FIRE_TIME BIGINT(19)\
+    \ NULL,\nPREV_FIRE_TIME BIGINT(19) NULL,\nPRIORITY INTEGER NULL,\nTRIGGER_STATE\
+    \ VARCHAR(16) NOT NULL,\nTRIGGER_TYPE VARCHAR(8) NOT NULL,\nSTART_TIME BIGINT(19)\
+    \ NOT NULL,\nEND_TIME BIGINT(19) NULL,\nCALENDAR_NAME VARCHAR(200) NULL,\nMISFIRE_INSTR\
+    \ SMALLINT(2) NULL,\nJOB_DATA BLOB NULL,\nPRIMARY KEY (SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP),\n\
+    FOREIGN KEY (SCHED_NAME,JOB_NAME,JOB_GROUP)\nREFERENCES QRTZ_JOB_DETAILS(SCHED_NAME,JOB_NAME,JOB_GROUP))\n\
+    ENGINE=InnoDB;\n\nCREATE TABLE QRTZ_SIMPLE_TRIGGERS (\nSCHED_NAME VARCHAR(120)\
+    \ NOT NULL,\nTRIGGER_NAME VARCHAR(200) NOT NULL,\nTRIGGER_GROUP VARCHAR(200) NOT\
+    \ NULL,\nREPEAT_COUNT BIGINT(7) NOT NULL,\nREPEAT_INTERVAL BIGINT(12) NOT NULL,\n\
+    TIMES_TRIGGERED BIGINT(10) NOT NULL,\nPRIMARY KEY (SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP),\n\
+    FOREIGN KEY (SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP)\nREFERENCES QRTZ_TRIGGERS(SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP))\n\
+    ENGINE=InnoDB;\n\nCREATE TABLE QRTZ_CRON_TRIGGERS (\nSCHED_NAME VARCHAR(120) NOT\
+    \ NULL,\nTRIGGER_NAME VARCHAR(200) NOT NULL,\nTRIGGER_GROUP VARCHAR(200) NOT NULL,\n\
+    CRON_EXPRESSION VARCHAR(120) NOT NULL,\nTIME_ZONE_ID VARCHAR(80),\nPRIMARY KEY\
+    \ (SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP),\nFOREIGN KEY (SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP)\n\
+    REFERENCES QRTZ_TRIGGERS(SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP))\nENGINE=InnoDB;\n\
+    \nCREATE TABLE QRTZ_SIMPROP_TRIGGERS\n  (          \n    SCHED_NAME VARCHAR(120)\
+    \ NOT NULL,\n    TRIGGER_NAME VARCHAR(200) NOT NULL,\n    TRIGGER_GROUP VARCHAR(200)\
+    \ NOT NULL,\n    STR_PROP_1 VARCHAR(512) NULL,\n    STR_PROP_2 VARCHAR(512) NULL,\n\
+    \    STR_PROP_3 VARCHAR(512) NULL,\n    INT_PROP_1 INT NULL,\n    INT_PROP_2 INT\
+    \ NULL,\n    LONG_PROP_1 BIGINT NULL,\n    LONG_PROP_2 BIGINT NULL,\n    DEC_PROP_1\
+    \ NUMERIC(13,4) NULL,\n    DEC_PROP_2 NUMERIC(13,4) NULL,\n    BOOL_PROP_1 BOOLEAN\
+    \ NULL,\n    BOOL_PROP_2 BOOLEAN NULL,\n    TIME_ZONE_ID VARCHAR(80) NULL,\n \
+    \   PRIMARY KEY (SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP),\n    FOREIGN KEY (SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP)\
+    \ \n    REFERENCES QRTZ_TRIGGERS(SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP))\nENGINE=InnoDB;\n\
+    \nCREATE TABLE QRTZ_BLOB_TRIGGERS (\nSCHED_NAME VARCHAR(120) NOT NULL,\nTRIGGER_NAME\
+    \ VARCHAR(200) NOT NULL,\nTRIGGER_GROUP VARCHAR(200) NOT NULL,\nBLOB_DATA BLOB\
+    \ NULL,\nPRIMARY KEY (SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP),\nINDEX (SCHED_NAME,TRIGGER_NAME,\
+    \ TRIGGER_GROUP),\nFOREIGN KEY (SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP)\nREFERENCES\
+    \ QRTZ_TRIGGERS(SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP))\nENGINE=InnoDB;\n\nCREATE\
+    \ TABLE QRTZ_CALENDARS (\nSCHED_NAME VARCHAR(120) NOT NULL,\nCALENDAR_NAME VARCHAR(200)\
+    \ NOT NULL,\nCALENDAR BLOB NOT NULL,\nPRIMARY KEY (SCHED_NAME,CALENDAR_NAME))\n\
+    ENGINE=InnoDB;\n\nCREATE TABLE QRTZ_PAUSED_TRIGGER_GRPS (\nSCHED_NAME VARCHAR(120)\
+    \ NOT NULL,\nTRIGGER_GROUP VARCHAR(200) NOT NULL,\nPRIMARY KEY (SCHED_NAME,TRIGGER_GROUP))\n\
+    ENGINE=InnoDB;\n\nCREATE TABLE QRTZ_FIRED_TRIGGERS (\nSCHED_NAME VARCHAR(120)\
+    \ NOT NULL,\nENTRY_ID VARCHAR(140) NOT NULL,\nTRIGGER_NAME VARCHAR(200) NOT NULL,\n\
+    TRIGGER_GROUP VARCHAR(200) NOT NULL,\nINSTANCE_NAME VARCHAR(200) NOT NULL,\nFIRED_TIME\
+    \ BIGINT(19) NOT NULL,\nSCHED_TIME BIGINT(19) NOT NULL,\nPRIORITY INTEGER NOT\
+    \ NULL,\nSTATE VARCHAR(16) NOT NULL,\nJOB_NAME VARCHAR(200) NULL,\nJOB_GROUP VARCHAR(200)\
+    \ NULL,\nIS_NONCONCURRENT BOOLEAN NULL,\nREQUESTS_RECOVERY BOOLEAN NULL,\nPRIMARY\
+    \ KEY (SCHED_NAME,ENTRY_ID))\nENGINE=InnoDB;\n\nCREATE TABLE QRTZ_SCHEDULER_STATE\
+    \ (\nSCHED_NAME VARCHAR(120) NOT NULL,\nINSTANCE_NAME VARCHAR(200) NOT NULL,\n\
+    LAST_CHECKIN_TIME BIGINT(19) NOT NULL,\nCHECKIN_INTERVAL BIGINT(19) NOT NULL,\n\
+    PRIMARY KEY (SCHED_NAME,INSTANCE_NAME))\nENGINE=InnoDB;\n\nCREATE TABLE QRTZ_LOCKS\
+    \ (\nSCHED_NAME VARCHAR(120) NOT NULL,\nLOCK_NAME VARCHAR(40) NOT NULL,\nPRIMARY\
+    \ KEY (SCHED_NAME,LOCK_NAME))\nENGINE=InnoDB;\n\nCREATE INDEX IDX_QRTZ_J_REQ_RECOVERY\
+    \ ON QRTZ_JOB_DETAILS(SCHED_NAME,REQUESTS_RECOVERY);\nCREATE INDEX IDX_QRTZ_J_GRP\
+    \ ON QRTZ_JOB_DETAILS(SCHED_NAME,JOB_GROUP);\n\nCREATE INDEX IDX_QRTZ_T_J ON QRTZ_TRIGGERS(SCHED_NAME,JOB_NAME,JOB_GROUP);\n\
+    CREATE INDEX IDX_QRTZ_T_JG ON QRTZ_TRIGGERS(SCHED_NAME,JOB_GROUP);\nCREATE INDEX\
+    \ IDX_QRTZ_T_C ON QRTZ_TRIGGERS(SCHED_NAME,CALENDAR_NAME);\nCREATE INDEX IDX_QRTZ_T_G\
+    \ ON QRTZ_TRIGGERS(SCHED_NAME,TRIGGER_GROUP);\nCREATE INDEX IDX_QRTZ_T_STATE ON\
+    \ QRTZ_TRIGGERS(SCHED_NAME,TRIGGER_STATE);\nCREATE INDEX IDX_QRTZ_T_N_STATE ON\
+    \ QRTZ_TRIGGERS(SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP,TRIGGER_STATE);\nCREATE\
+    \ INDEX IDX_QRTZ_T_N_G_STATE ON QRTZ_TRIGGERS(SCHED_NAME,TRIGGER_GROUP,TRIGGER_STATE);\n\
+    CREATE INDEX IDX_QRTZ_T_NEXT_FIRE_TIME ON QRTZ_TRIGGERS(SCHED_NAME,NEXT_FIRE_TIME);\n\
+    CREATE INDEX IDX_QRTZ_T_NFT_ST ON QRTZ_TRIGGERS(SCHED_NAME,TRIGGER_STATE,NEXT_FIRE_TIME);\n\
+    CREATE INDEX IDX_QRTZ_T_NFT_MISFIRE ON QRTZ_TRIGGERS(SCHED_NAME,MISFIRE_INSTR,NEXT_FIRE_TIME);\n\
+    CREATE INDEX IDX_QRTZ_T_NFT_ST_MISFIRE ON QRTZ_TRIGGERS(SCHED_NAME,MISFIRE_INSTR,NEXT_FIRE_TIME,TRIGGER_STATE);\n\
+    CREATE INDEX IDX_QRTZ_T_NFT_ST_MISFIRE_GRP ON QRTZ_TRIGGERS(SCHED_NAME,MISFIRE_INSTR,NEXT_FIRE_TIME,TRIGGER_GROUP,TRIGGER_STATE);\n\
+    \nCREATE INDEX IDX_QRTZ_FT_TRIG_INST_NAME ON QRTZ_FIRED_TRIGGERS(SCHED_NAME,INSTANCE_NAME);\n\
+    CREATE INDEX IDX_QRTZ_FT_INST_JOB_REQ_RCVRY ON QRTZ_FIRED_TRIGGERS(SCHED_NAME,INSTANCE_NAME,REQUESTS_RECOVERY);\n\
+    CREATE INDEX IDX_QRTZ_FT_J_G ON QRTZ_FIRED_TRIGGERS(SCHED_NAME,JOB_NAME,JOB_GROUP);\n\
+    CREATE INDEX IDX_QRTZ_FT_JG ON QRTZ_FIRED_TRIGGERS(SCHED_NAME,JOB_GROUP);\nCREATE\
+    \ INDEX IDX_QRTZ_FT_T_G ON QRTZ_FIRED_TRIGGERS(SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP);\n\
+    CREATE INDEX IDX_QRTZ_FT_TG ON QRTZ_FIRED_TRIGGERS(SCHED_NAME,TRIGGER_GROUP);\n\
+    \ncommit; \n"
+kind: ConfigMap
+metadata:
+  name: deployment-scripts
+  namespace: openunison-deploy
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: artifact-deployment
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+- kind: ServiceAccount
+  namespace: openunison-deploy
+  name: default
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: artifact-deployment
+  namespace: openunison-deploy
+spec:
+  template:
+    spec:
+      containers:
+      - name: artifact-deployment
+        image: docker.io/tremolosecurity/kubernetes-artifact-deployment:1.1.0
+        command: ["java", "-jar", "/usr/local/artifactdeploy/artifact-deploy.jar",  "-extraCertsPath","/etc/extracerts","-installScriptURL", "file:///etc/input-maps/deploy.js","-kubernetesURL","https://kubernetes.default.svc.cluster.local","-rootCaPath","/var/run/secrets/kubernetes.io/serviceaccount/ca.crt","-secretsPath","/etc/secrets/input.props","-tokenPath","/var/run/secrets/kubernetes.io/serviceaccount/token","-deploymentTemplate","file:///etc/input-maps/openunison.yaml"]
+        volumeMounts:
+          - name: secrets-dir
+            mountPath: "/etc/secrets"
+            readOnly: true
+          - name: extra-certs-dir
+            mountPath: "/etc/extracerts"
+            readOnly: true
+          - name: input-maps
+            mountPath: "/etc/input-maps"
+            readOnly: true 
+      restartPolicy: Never
+      volumes:
+        - name : secrets-dir
+          secret:
+            secretName: input
+        - name : extra-certs-dir
+          configMap:
+            name: extracerts
+        - name: input-maps
+          configMap:
+            name: deployment-scripts
+  backoffLimit: 1
