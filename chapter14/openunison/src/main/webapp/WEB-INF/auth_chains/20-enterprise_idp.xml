@@ -32,12 +32,13 @@
       <param name="workflowName" value="jitdb" />
     </params>
   </authMech>
+
   <authMech>
     <name>jit</name>
     <required>required</required>
     <params>
       <param name="nameAttr" value="uid" />
-      <param name="workflowName" value="gitlabjit" />
+      <param name="workflowName" value="dev-ns-jit" />
     </params>
   </authMech>
   <authMech>
@@ -45,7 +46,7 @@
     <required>required</required>
     <params>
       <param name="nameAttr" value="uid" />
-      <param name="workflowName" value="dev-ns-jit" />
+      <param name="workflowName" value="gitlabjit" />
     </params>
   </authMech>
   <authMech>

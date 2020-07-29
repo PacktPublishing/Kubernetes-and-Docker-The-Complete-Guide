@@ -31,6 +31,59 @@
                     <param name="attributes" value="unison.group.create.sql=INSERT INTO localGroups (name,description) VALUES (?,?)"/>
                     <param name="attributes" value="unison.group.create.param.2=View kubernetes namespace $nameSpace$" />
                 </customTask>
+
+              <customTask className="com.tremolosecurity.provisioning.customTasks.AddGroupToStore">
+                  <param name="target" value="gitlab"/>
+                  <param name="name" value="approvers-k8s-$nameSpace$"/>
+                  <param name="attributes" value="requestAccessEnabled=false"/>
+                  
+              </customTask>
+              <customTask className="com.tremolosecurity.provisioning.customTasks.AddGroupToStore">
+                  <param name="target" value="gitlab"/>
+                  <param name="name" value="k8s-namespace-operations-$nameSpace$"/>
+                  <param name="attributes" value="requestAccessEnabled=false"/>
+                  
+              </customTask>
+              <customTask className="com.tremolosecurity.provisioning.customTasks.AddGroupToStore">
+                  <param name="target" value="gitlab"/>
+                  <param name="name" value="k8s-namespace-developer-$nameSpace$"/>
+                  <param name="attributes" value="requestAccessEnabled=false"/>
+              </customTask>
+
+              <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateProject">
+                <param name="namespace" value="#[GITLAB_NAMESPACE]"/>
+                <param name="name" value="$nameSpace$"/>
+                <param name="description" value="Application project"/>
+                <param name="issuesEnabled" value="true"/>
+                <param name="mergeRequestsEnabled" value="true"/>
+                <param name="wikiEnabled" value="true"/>
+                <param name="snipitsEnabled" value="true"/>
+                <param name="visibility" value="2"/>
+                <param name="targetName" value="gitlab"/>
+                
+            </customTask>
+
+            <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
+              <param name="groupName" value="approvers-k8s-$nameSpace$"/>
+              <param name="targetName" value="gitlab"/>
+              <param name="accessLevel" value="MAINTAINER" />
+              
+          </customTask>
+          <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
+            <param name="groupName" value="k8s-namespace-operations-$nameSpace$"/>
+            <param name="targetName" value="gitlab"/>
+            <param name="accessLevel" value="DEVELOPER" />
+            
+        </customTask>
+        <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
+          <param name="groupName" value="k8s-namespace-developer-$nameSpace$"/>
+          <param name="targetName" value="gitlab"/>
+          <param name="accessLevel" value="DEVELOPER" />
+          
+      </customTask>
+
+          
+
                 <mapping strict="true">
                     <onSuccess>
                         <addGroup name="approvers-k8s-$nameSpace$" remove="false"/>
