@@ -13,6 +13,9 @@
           </onFailure>
       </ifAttrHasValue>
 
+      <customTask className="com.tremolosecurity.unison.k8s.tasks.MapGitlabGroups"/>
+
+
       <mapping strict="true">
         <map>
           <mapping targetAttributeName="TREMOLO_USER_ID" sourceType="user" targetAttributeSource="uid"/>

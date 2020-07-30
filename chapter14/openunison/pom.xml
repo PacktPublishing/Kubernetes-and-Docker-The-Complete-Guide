@@ -57,6 +57,11 @@
         <artifactId>unison-applications-openshift3</artifactId>
         <version>1.0.20</version>
       </dependency>
+      <dependency>
+        <groupId>com.tremolosecurity.unison</groupId>
+        <artifactId>unison-applications-gitlab</artifactId>
+        <version>1.0.20</version>
+      </dependency>
   </dependencies>
   <build>
     <plugins>
