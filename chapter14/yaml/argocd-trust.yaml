@@ -1,0 +1,20 @@
+apiVersion: openunison.tremolo.io/v1
+kind: Trust
+metadata:
+  labels:
+    openunison.io/instance: orchestra
+  name: argocd
+  namespace: openunison
+spec:
+  accessTokenSkewMillis: 120000
+  accessTokenTimeToLive: 60000
+  authChainName: LoginService
+  clientId: argocd
+  codeLastMileKeyName: lastmile-oidc
+  codeTokenSkewMilis: 60000
+  publicEndpoint: true
+  redirectURI:
+  - https://argocd.apps.192-168-2-140/auth/callback
+  - http://localhost:8085/auth/callback
+  signedUserInfo: true
+  verifyRedirect: true

@@ -21,7 +21,7 @@
           <mapping targetAttributeName="TREMOLO_USER_ID" sourceType="user" targetAttributeSource="uid"/>
           <mapping targetAttributeName="username" sourceType="user" targetAttributeSource="uid"/>
           <mapping targetAttributeName="email" sourceType="user" targetAttributeSource="mail"/>
-          <mapping targetAttributeName="name" sourceType="composite" targetAttributeSource="${givenName} ${sn}"/>
+          <mapping targetAttributeName="name" sourceType="composite" targetAttributeSource="${givenname} ${sn}"/>
           <mapping targetAttributeName="isAdmin" sourceType="user" targetAttributeSource="isAdmin"/>
         </map>
         <onSuccess>
@@ -36,6 +36,7 @@
                     <value>email</value>
                     <value>isAdmin</value>
                     <value>skipConfirmation</value>
+                    <value>projectsLimit</value>
                 </attributes>
             </provision>
         </onSuccess>

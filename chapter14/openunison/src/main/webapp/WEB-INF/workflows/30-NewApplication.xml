@@ -32,6 +32,13 @@
           <param name="attributes" value="unison.group.create.param.2=View kubernetes namespace $nameSpace$" />
         </customTask>
 
+
+        <customTask className="com.tremolosecurity.provisioning.customTasks.AddGroupToStore">
+          <param name="target" value="gitlab" />
+          <param name="name" value="$nameSpace$" />
+          <param name="attributes" value="requestAccessEnabled=false" />
+
+        </customTask>
         <customTask className="com.tremolosecurity.provisioning.customTasks.AddGroupToStore">
           <param name="target" value="gitlab" />
           <param name="name" value="approvers-k8s-$nameSpace$" />
@@ -51,8 +58,8 @@
         </customTask>
 
         <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateProject">
-          <param name="namespace" value="#[GITLAB_NAMESPACE]" />
-          <param name="name" value="$nameSpace$" />
+          <param name="namespace" value="$nameSpace$" />
+          <param name="name" value="$nameSpace$-application" />
           <param name="description" value="Application project" />
           <param name="issuesEnabled" value="true" />
           <param name="mergeRequestsEnabled" value="true" />
@@ -61,6 +68,9 @@
           <param name="visibility" value="2" />
           <param name="targetName" value="gitlab" />
           <param name="gitSshHost" value="#[GITLAB_SSH_HOST]" />
+          <param name="createWebhook" value="true" />
+          <param name="webhookSuffix" value="#[GITLAB_WEBHOOK_SUFFIX]" />
+          <param name="webhookBranchFilter" value="master" />
         </customTask>
 
         <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
@@ -72,7 +82,7 @@
         <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
           <param name="groupName" value="k8s-namespace-operations-$nameSpace$" />
           <param name="targetName" value="gitlab" />
-          <param name="accessLevel" value="DEVELOPER" />
+          <param name="accessLevel" value="GUEST" />
 
         </customTask>
         <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
@@ -98,6 +108,417 @@
             <mapping targetAttributeName="uid" targetAttributeSource="uid" sourceType="user" />
           </map>
         </mapping>
+        <!-- Create Build Namespace -->
+        <customTask className="com.tremolosecurity.provisioning.tasks.CreateK8sObject">
+          <param name="targetName" value="k8s" />
+          <param name="template">
+            <![CDATA[ 
+{
+    "kind": "Namespace",
+    "apiVersion": "v1",
+    "metadata": {
+      "name": "$nameSpace$-build",
+      "labels": {
+        "name": "$nameSpace$-build",
+        "type": "build",
+        "env": "dev"
+      }
+    }
+  }
+]]>
+          </param>
+          <param name="kind" value="Namespace" />
+          <param name="url" value="/api/v1/namespaces" />
+        </customTask>
+        <!-- create git pull secret -->
+        <customTask className="com.tremolosecurity.provisioning.tasks.CreateK8sObject">
+          <param name="targetName" value="k8s" />
+          <param name="template">
+            <![CDATA[ 
+{
+  "kind": "Secret",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "git-pull",
+    "namespace": "$nameSpace$-build",
+    "annotations":{
+      "tekton.dev/git-0":"#[GITLAB_SSH_HOST]"  
+    }
+  },
+  "data": {
+    "ssh-privatekey": "$base64SshPrivateKey$"
+  },
+  "type": "kubernetes.io/ssh-auth"
+}
+]]>
+          </param>
+          <param name="kind" value="Secret" />
+          <param name="url" value="/api/v1/namespaces/$nameSpace$-build/secrets" />
+        </customTask>
+
+        <!-- create service account for running builds -->
+        <customTask className="com.tremolosecurity.provisioning.tasks.CreateK8sObject">
+          <param name="targetName" value="k8s" />
+          <param name="template">
+            <![CDATA[ 
+            {
+              "apiVersion": "v1",
+              "kind": "ServiceAccount",
+              "metadata": {
+                "name": "tekton-build",
+                "namespace": "$nameSpace$-build"
+              },
+              "secrets": [
+                {
+                  "name": "git-pull"
+                }
+              ]
+            }
+]]>
+          </param>
+          <param name="kind" value="ServiceAccount" />
+          <param name="url" value="/api/v1/namespaces/$nameSpace$-build/serviceaccounts" />
+        </customTask>
+
+        <!-- create the git input -->
+        <customTask className="com.tremolosecurity.provisioning.tasks.CreateK8sObject">
+          <param name="targetName" value="k8s" />
+          <param name="template">
+            <![CDATA[ 
+            {
+              "apiVersion": "tekton.dev/v1alpha1",
+              "kind": "PipelineResource",
+              "metadata": {
+                "name": "git-resource",
+                "namespace": "$nameSpace$-build"
+              },
+              "spec": {
+                "type": "git",
+                "params": [
+                  {
+                    "name": "url",
+                    "value": "$gitSshInternalURL$"
+                  },
+                  {
+                    "name": "revision",
+                    "value": "master"
+                  }
+                ]
+              }
+            }
+]]>
+          </param>
+          <param name="kind" value="PipelineResource" />
+          <param name="url" value="/apis/tekton.dev/v1alpha1/namespaces/$nameSpace$-build/pipelineresources" />
+        </customTask>
+
+        <!-- create trigger template -->
+        <customTask className="com.tremolosecurity.provisioning.tasks.CreateK8sObject">
+          <param name="targetName" value="k8s" />
+          <param name="template">
+            <![CDATA[ 
+            {
+              "apiVersion": "triggers.tekton.dev/v1alpha1",
+              "kind": "TriggerTemplate",
+              "metadata": {
+                "name": "gitlab-build-template",
+                "namespace": "$nameSpace$-build"
+              },
+              "spec": {
+                "params": [
+            
+                ],
+                "resourcetemplates": [
+                  {
+                    "apiVersion": "tekton.dev/v1alpha1",
+                    "kind": "TaskRun",
+                    "metadata": {
+                      "generateName": "build-$nameSpace$"
+                    },
+                    "spec": {
+                      "serviceAccountName": "tekton-build"
+                    }
+                  }
+                ]
+              }
+            }
+]]>
+          </param>
+          <param name="kind" value="TriggerTemplate" />
+          <param name="url" value="/apis/triggers.tekton.dev/v1alpha1/namespaces/$nameSpace$-build/triggertemplates" />
+        </customTask>
+
+        <!-- create trigger binding -->
+        <customTask className="com.tremolosecurity.provisioning.tasks.CreateK8sObject">
+          <param name="targetName" value="k8s" />
+          <param name="template">
+            <![CDATA[ 
+            {
+              "apiVersion": "triggers.tekton.dev/v1alpha1",
+              "kind": "TriggerBinding",
+              "metadata": {
+                "name": "gitlab-push-binding",
+                "namespace": "$nameSpace$-build"
+              },
+              "spec": {
+                "params": [
+            
+                ]
+              }
+            }
+]]>
+          </param>
+          <param name="kind" value="TriggerBinding" />
+          <param name="url" value="/apis/triggers.tekton.dev/v1alpha1/namespaces/$nameSpace$-build/triggerbindings" />
+        </customTask>
+
+        <!-- create webhook secret -->
+        <customTask className="com.tremolosecurity.provisioning.tasks.CreateK8sObject">
+          <param name="targetName" value="k8s" />
+          <param name="template">
+            <![CDATA[ 
+{
+  "kind": "Secret",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "gitlab-secret",
+    "namespace": "$nameSpace$-build"
+  },
+  "data": {
+    "secretToken": "$b64WebhookToken$"
+  },
+  "type": "Opaque"
+}
+]]>
+          </param>
+          <param name="kind" value="Secret" />
+          <param name="url" value="/api/v1/namespaces/$nameSpace$-build/secrets" />
+        </customTask>
+
+        <!-- create service account for the webhook -->
+        <customTask className="com.tremolosecurity.provisioning.tasks.CreateK8sObject">
+          <param name="targetName" value="k8s" />
+          <param name="template">
+            <![CDATA[ 
+            {
+              "apiVersion": "v1",
+              "kind": "ServiceAccount",
+              "metadata": {
+                "name": "tekton-triggers-gitlab-sa",
+                "namespace": "$nameSpace$-build"
+              },
+              "secrets": [
+                {
+                  "name": "gitlab-secret"
+                }
+              ]
+            }
+]]>
+          </param>
+          <param name="kind" value="ServiceAccount" />
+          <param name="url" value="/api/v1/namespaces/$nameSpace$-build/serviceaccounts" />
+        </customTask>
+
+        <!-- create role binding for the webhook -->
+        <customTask className="com.tremolosecurity.provisioning.tasks.CreateK8sObject">
+          <param name="targetName" value="k8s" />
+          <param name="template">
+            <![CDATA[ 
+            {
+              "apiVersion": "rbac.authorization.k8s.io/v1",
+              "kind": "RoleBinding",
+              "metadata": {
+                "name": "tekton-triggers-gitlab-binding",
+                "namespace": "$nameSpace$-build"
+              },
+              "subjects": [
+                {
+                  "kind": "ServiceAccount",
+                  "name": "tekton-triggers-gitlab-sa"
+                }
+              ],
+              "roleRef": {
+                "apiGroup": "rbac.authorization.k8s.io",
+                "kind": "ClusterRole",
+                "name": "tekton-triggers-gitlab-minimal"
+              }
+            }
+                          ]]>
+          </param>
+          <param name="kind" value="RoleBinding" />
+          <param name="url" value="/apis/rbac.authorization.k8s.io/v1/namespaces/$nameSpace$-build/rolebindings" />
+        </customTask>
+
+        <!-- create event listener -->
+        <customTask className="com.tremolosecurity.provisioning.tasks.CreateK8sObject">
+          <param name="targetName" value="k8s" />
+          <param name="template">
+            <![CDATA[ 
+            {
+              "apiVersion": "triggers.tekton.dev/v1alpha1",
+              "kind": "EventListener",
+              "metadata": {
+                "name": "gitlab-listener",
+                "namespace": "$nameSpace$-build"
+              },
+              "spec": {
+                "serviceAccountName": "tekton-triggers-gitlab-sa",
+                "triggers": [
+                  {
+                    "name": "gitlab-push-events-trigger",
+                    "interceptors": [
+                      {
+                        "gitlab": {
+                          "secretRef": {
+                            "secretName": "gitlab-secret",
+                            "secretKey": "secretToken"
+                          },
+                          "eventTypes": [
+                            "Push Hook"
+                          ]
+                        }
+                      }
+                    ],
+                    "bindings": [
+                      {
+                        "ref": "gitlab-push-binding"
+                      }
+                    ],
+                    "template": {
+                      "name": "gitlab-build-template"
+                    }
+                  }
+                ]
+              }
+            }
+]]>
+          </param>
+          <param name="kind" value="EventListener" />
+          <param name="url" value="/apis/triggers.tekton.dev/v1alpha1/namespaces/$nameSpace$-build/eventlisteners" />
+        </customTask>
+
+
+        <!-- create webhook ingress -->
+        <customTask className="com.tremolosecurity.provisioning.tasks.CreateK8sObject">
+          <param name="targetName" value="k8s" />
+          <param name="template">
+            <![CDATA[ 
+            {
+              "apiVersion": "extensions/v1beta1",
+              "kind": "Ingress",
+              "metadata": {
+                "name": "gitlab-webhook",
+                "namespace": "$nameSpace$-build",
+                "annotations": {
+                  "cert-manager.io/cluster-issuer": "ca-issuer"
+                }
+              },
+              "spec": {
+                "rules": [
+                  {
+                    "host": "$nameSpace$-application.#[GITLAB_WEBHOOK_SUFFIX]",
+                    "http": {
+                      "paths": [
+                        {
+                          "backend": {
+                            "serviceName": "el-gitlab-listener",
+                            "servicePort": 8080
+                          },
+                          "pathType": "ImplementationSpecific"
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "tls": [
+                  {
+                    "hosts": [
+                      "$nameSpace$-application.#[GITLAB_WEBHOOK_SUFFIX]"
+                    ],
+                    "secretName": "ingresssecret"
+                  }
+                ]
+              }
+            }
+]]>
+          </param>
+          <param name="kind" value="Ingress" />
+          <param name="url" value="/apis/extensions/v1beta1/namespaces/$nameSpace$-build/ingresses" />
+        </customTask>
+
+
+        <customTask className="com.tremolosecurity.provisioning.tasks.CreateK8sObject">
+          <param name="targetName" value="k8s" />
+          <param name="template">
+            <![CDATA[ 
+                        {
+                            "kind": "RoleBinding",
+                            "apiVersion": "rbac.authorization.k8s.io/v1",
+                            "metadata": {
+                              "name": "operations-binding",
+                              "namespace": "$nameSpace$-build"
+                            },
+                            "subjects": [
+                              {
+                                "kind": "Group",
+                                "name": "k8s-namespace-operations-$nameSpace$",
+                                "apiGroup": "rbac.authorization.k8s.io"
+                              },
+                              {
+                                "kind": "Group",
+                                "name": "k8s-namespace-developer-$nameSpace$",
+                                "apiGroup": "rbac.authorization.k8s.io"
+                              }
+                            ],
+                            "roleRef": {
+                              "kind": "ClusterRole",
+                              "name": "admin",
+                              "apiGroup": "rbac.authorization.k8s.io"
+                            }
+                          }
+                          ]]>
+          </param>
+          <param name="kind" value="RoleBinding" />
+          <param name="url" value="/apis/rbac.authorization.k8s.io/v1/namespaces/$nameSpace$-build/rolebindings" />
+        </customTask>
+
+
+        <!-- Create operations project -->
+        <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateProject">
+          <param name="namespace" value="$nameSpace$" />
+          <param name="name" value="$nameSpace$-operations" />
+          <param name="description" value="Operations project" />
+          <param name="issuesEnabled" value="true" />
+          <param name="mergeRequestsEnabled" value="true" />
+          <param name="wikiEnabled" value="true" />
+          <param name="snipitsEnabled" value="true" />
+          <param name="visibility" value="2" />
+          <param name="targetName" value="gitlab" />
+          <param name="gitSshHost" value="#[GITLAB_SSH_HOST]" />
+          <param name="createWebhook" value="true" />
+          <param name="webhookSuffix" value="#[GITLAB_WEBHOOK_SUFFIX]" />
+          <param name="webhookBranchFilter" value="master" />
+        </customTask>
+
+        <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
+          <param name="groupName" value="approvers-k8s-$nameSpace$" />
+          <param name="targetName" value="gitlab" />
+          <param name="accessLevel" value="MAINTAINER" />
+
+        </customTask>
+        <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
+          <param name="groupName" value="k8s-namespace-operations-$nameSpace$" />
+          <param name="targetName" value="gitlab" />
+          <param name="accessLevel" value="DEVELOPER" />
+
+        </customTask>
+        <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
+          <param name="groupName" value="k8s-namespace-developer-$nameSpace$" />
+          <param name="targetName" value="gitlab" />
+          <param name="accessLevel" value="DEVELOPER" />
+
+        </customTask>
+
         <!-- Create Dev Namespace -->
         <customTask className="com.tremolosecurity.provisioning.tasks.CreateK8sObject">
           <param name="targetName" value="k8s" />
@@ -120,8 +541,9 @@
           <param name="kind" value="Namespace" />
           <param name="url" value="/api/v1/namespaces" />
         </customTask>
-        <!-- create git pull secret -->
-        <customTask className="com.tremolosecurity.provisioning.tasks.CreateK8sObject">
+
+         <!-- create git pull secret -->
+         <customTask className="com.tremolosecurity.provisioning.tasks.CreateK8sObject">
           <param name="targetName" value="k8s" />
           <param name="template">
             <![CDATA[ 
@@ -130,10 +552,7 @@
   "apiVersion": "v1",
   "metadata": {
     "name": "git-pull",
-    "namespace": "$nameSpace$-dev",
-    "annotations":{
-      "tekton.dev/git-0":"#[GITLAB_SSH_HOST]"  
-    }
+    "namespace": "$nameSpace$-dev"
   },
   "data": {
     "ssh-privatekey": "$base64SshPrivateKey$"
@@ -146,61 +565,6 @@
           <param name="url" value="/api/v1/namespaces/$nameSpace$-dev/secrets" />
         </customTask>
 
-        <!-- create service account for running builds -->
-        <customTask className="com.tremolosecurity.provisioning.tasks.CreateK8sObject">
-          <param name="targetName" value="k8s" />
-          <param name="template">
-            <![CDATA[ 
-            {
-              "apiVersion": "v1",
-              "kind": "ServiceAccount",
-              "metadata": {
-                "name": "tekton-build",
-                "namespace": "$nameSpace$-dev"
-              },
-              "secrets": [
-                {
-                  "name": "git-pull"
-                }
-              ]
-            }
-]]>
-          </param>
-          <param name="kind" value="ServiceAccount" />
-          <param name="url" value="/api/v1/namespaces/$nameSpace$-dev/serviceaccounts" />
-        </customTask>
-
-        <!-- create the git input -->
-        <customTask className="com.tremolosecurity.provisioning.tasks.CreateK8sObject">
-          <param name="targetName" value="k8s" />
-          <param name="template">
-            <![CDATA[ 
-            {
-              "apiVersion": "tekton.dev/v1alpha1",
-              "kind": "PipelineResource",
-              "metadata": {
-                "name": "git-resource",
-                "namespace": "$nameSpace$-dev"
-              },
-              "spec": {
-                "type": "git",
-                "params": [
-                  {
-                    "name": "url",
-                    "value": "$gitSshInternalURL$"
-                  },
-                  {
-                    "name": "revision",
-                    "value": "master"
-                  }
-                ]
-              }
-            }
-]]>
-          </param>
-          <param name="kind" value="PipelineResource" />
-          <param name="url" value="/apis/tekton.dev/v1alpha1/namespaces/$nameSpace$-dev/pipelineresources" />
-        </customTask>
 
         <customTask className="com.tremolosecurity.provisioning.tasks.CreateK8sObject">
           <param name="targetName" value="k8s" />
@@ -236,6 +600,7 @@
           <param name="kind" value="RoleBinding" />
           <param name="url" value="/apis/rbac.authorization.k8s.io/v1/namespaces/$nameSpace$-dev/rolebindings" />
         </customTask>
+
 
         <!-- Create production namespace -->
         <customTask className="com.tremolosecurity.provisioning.tasks.CreateK8sObject">
