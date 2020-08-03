@@ -35,10 +35,18 @@
 
         <customTask className="com.tremolosecurity.provisioning.customTasks.AddGroupToStore">
           <param name="target" value="gitlab" />
-          <param name="name" value="$nameSpace$" />
+          <param name="name" value="$nameSpace$-production" />
           <param name="attributes" value="requestAccessEnabled=false" />
 
         </customTask>
+
+        <customTask className="com.tremolosecurity.provisioning.customTasks.AddGroupToStore">
+          <param name="target" value="gitlab" />
+          <param name="name" value="$nameSpace$-dev" />
+          <param name="attributes" value="requestAccessEnabled=false" />
+
+        </customTask>
+
         <customTask className="com.tremolosecurity.provisioning.customTasks.AddGroupToStore">
           <param name="target" value="gitlab" />
           <param name="name" value="approvers-k8s-$nameSpace$" />
@@ -58,7 +66,7 @@
         </customTask>
 
         <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateProject">
-          <param name="namespace" value="$nameSpace$" />
+          <param name="namespace" value="$nameSpace$-production" />
           <param name="name" value="$nameSpace$-application" />
           <param name="description" value="Application project" />
           <param name="issuesEnabled" value="true" />
@@ -71,6 +79,32 @@
           <param name="createWebhook" value="true" />
           <param name="webhookSuffix" value="#[GITLAB_WEBHOOK_SUFFIX]" />
           <param name="webhookBranchFilter" value="master" />
+        </customTask>
+
+        <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateGitFile">
+          <param name="targetName" value="gitlab" />
+          <param name="namespace" value="$nameSpace$-production" />
+          <param name="project" value="$nameSpace$-application" />
+          <param name="branch" value="master" />
+          <param name="path" value="README.md" />
+          <param name="content">
+<![CDATA[ 
+# $nameSpace$-application 
+
+Fork this project to create to create your application.  Create a pull request to trigger a build and deployment to development.
+
+]]>
+          </param>
+          <param name="commitMessage" value="initializing the repository" />
+
+        </customTask>
+
+        <customTask className="com.tremolosecurity.argocd.tasks.CreateGitRepository">
+          <param name="type" value="git" />
+          <param name="name" value="$nameSpace$-application" />
+          <param name="repoUrl" value="$gitSshInternalURL$" />
+          <param name="sshPrivateKey" value="$gitPrivateKey$" />
+          <param name="target" value="argocd" />
         </customTask>
 
         <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
@@ -88,10 +122,42 @@
         <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
           <param name="groupName" value="k8s-namespace-developer-$nameSpace$" />
           <param name="targetName" value="gitlab" />
-          <param name="accessLevel" value="DEVELOPER" />
+          <param name="accessLevel" value="GUEST" />
 
         </customTask>
 
+        <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.ForkProject">
+          <param name="sourceProjectName" value="$nameSpace$-application" />
+          <param name="sourceProjectNamespace" value="$nameSpace$-production" />
+          <param name="destinationNamespace" value="$nameSpace$-dev" />
+          <param name="targetName" value="gitlab" />
+        </customTask>
+
+        <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
+          <param name="projectName" value="$nameSpace$-application" />
+          <param name="namespace" value="$nameSpace$-dev" />
+          <param name="groupName" value="approvers-k8s-$nameSpace$" />
+          <param name="targetName" value="gitlab" />
+          <param name="accessLevel" value="MAINTAINER" />
+
+        </customTask>
+        <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
+          <param name="projectName" value="$nameSpace$-application" />
+          <param name="namespace" value="$nameSpace$-dev" />
+          <param name="groupName" value="k8s-namespace-operations-$nameSpace$" />
+          <param name="targetName" value="gitlab" />
+          <param name="accessLevel" value="GUEST" />
+
+        </customTask>
+        <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
+          <param name="projectName" value="$nameSpace$-application" />
+          <param name="namespace" value="$nameSpace$-dev" />
+          <param name="groupName" value="k8s-namespace-developer-$nameSpace$" />
+          
+          <param name="targetName" value="gitlab" />
+          <param name="accessLevel" value="GUEST" />
+
+        </customTask>
 
         <mapping strict="true">
           <onSuccess>
@@ -483,9 +549,74 @@
         </customTask>
 
 
+        <!-- Create tekton project -->
+        <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateProject">
+          <param name="namespace" value="$nameSpace$-production" />
+          <param name="name" value="$nameSpace$-build" />
+          <param name="description" value="Build project" />
+          <param name="issuesEnabled" value="true" />
+          <param name="mergeRequestsEnabled" value="true" />
+          <param name="wikiEnabled" value="true" />
+          <param name="snipitsEnabled" value="true" />
+          <param name="visibility" value="2" />
+          <param name="targetName" value="gitlab" />
+          <param name="gitSshHost" value="#[GITLAB_SSH_HOST]" />
+          <param name="createWebhook" value="false" />
+          <param name="webhookSuffix" value="#[GITLAB_WEBHOOK_SUFFIX]" />
+          <param name="webhookBranchFilter" value="master" />
+        </customTask>
+
+        <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateGitFile">
+          <param name="targetName" value="gitlab" />
+          <param name="namespace" value="$nameSpace$-production" />
+          <param name="project" value="$nameSpace$-build" />
+          <param name="branch" value="master" />
+          <param name="path" value="README.md" />
+          <param name="content">
+<![CDATA[ 
+# $nameSpace$-build 
+
+Fork this project to create a build process for for $nameSpace$.  Create a pull request to deploy updates.
+
+]]>
+          </param>
+          <param name="commitMessage" value="initializing the repository" />
+
+        </customTask>
+
+        <customTask className="com.tremolosecurity.argocd.tasks.CreateGitRepository">
+          <param name="type" value="git" />
+          <param name="name" value="$nameSpace$-build" />
+          <param name="repoUrl" value="$gitSshInternalURL$" />
+          <param name="sshPrivateKey" value="$gitPrivateKey$" />
+          <param name="target" value="argocd" />
+        </customTask>
+
+        <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
+          <param name="groupName" value="approvers-k8s-$nameSpace$" />
+          <param name="targetName" value="gitlab" />
+          <param name="accessLevel" value="MAINTAINER" />
+
+        </customTask>
+        <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
+          <param name="groupName" value="k8s-namespace-operations-$nameSpace$" />
+          <param name="targetName" value="gitlab" />
+          <param name="accessLevel" value="GUEST" />
+
+        </customTask>
+        <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
+          <param name="groupName" value="k8s-namespace-developer-$nameSpace$" />
+          <param name="targetName" value="gitlab" />
+          <param name="accessLevel" value="GUEST" />
+
+        </customTask>
+
+        
+
+
         <!-- Create operations project -->
         <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateProject">
-          <param name="namespace" value="$nameSpace$" />
+          <param name="namespace" value="$nameSpace$-production" />
           <param name="name" value="$nameSpace$-operations" />
           <param name="description" value="Operations project" />
           <param name="issuesEnabled" value="true" />
@@ -500,6 +631,32 @@
           <param name="webhookBranchFilter" value="master" />
         </customTask>
 
+        <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateGitFile">
+          <param name="targetName" value="gitlab" />
+          <param name="namespace" value="$nameSpace$-production" />
+          <param name="project" value="$nameSpace$-operations" />
+          <param name="branch" value="master" />
+          <param name="path" value="README.md" />
+          <param name="content">
+<![CDATA[ 
+# $nameSpace$-build 
+
+Fork this project to create manifests for $nameSpace$.  Create a pull request to deploy updates.
+
+]]>
+          </param>
+          <param name="commitMessage" value="initializing the repository" />
+
+        </customTask>
+
+        <customTask className="com.tremolosecurity.argocd.tasks.CreateGitRepository">
+          <param name="type" value="git" />
+          <param name="name" value="$nameSpace$-operations" />
+          <param name="repoUrl" value="$gitSshInternalURL$" />
+          <param name="sshPrivateKey" value="$gitPrivateKey$" />
+          <param name="target" value="argocd" />
+        </customTask>
+
         <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
           <param name="groupName" value="approvers-k8s-$nameSpace$" />
           <param name="targetName" value="gitlab" />
@@ -509,13 +666,45 @@
         <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
           <param name="groupName" value="k8s-namespace-operations-$nameSpace$" />
           <param name="targetName" value="gitlab" />
-          <param name="accessLevel" value="DEVELOPER" />
+          <param name="accessLevel" value="GUEST" />
 
         </customTask>
         <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
           <param name="groupName" value="k8s-namespace-developer-$nameSpace$" />
           <param name="targetName" value="gitlab" />
-          <param name="accessLevel" value="DEVELOPER" />
+          <param name="accessLevel" value="GUEST" />
+
+        </customTask>
+
+        <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.ForkProject">
+          <param name="sourceProjectName" value="$nameSpace$-operations" />
+          <param name="sourceProjectNamespace" value="$nameSpace$-production" />
+          <param name="destinationNamespace" value="$nameSpace$-dev" />
+          <param name="targetName" value="gitlab" />
+        </customTask>
+
+        <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
+          <param name="projectName" value="$nameSpace$-operations" />
+          <param name="namespace" value="$nameSpace$-dev" />
+          <param name="groupName" value="approvers-k8s-$nameSpace$" />
+          <param name="targetName" value="gitlab" />
+          <param name="accessLevel" value="MAINTAINER" />
+
+        </customTask>
+        <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
+          <param name="projectName" value="$nameSpace$-operations" />
+          <param name="namespace" value="$nameSpace$-dev" />
+          <param name="groupName" value="k8s-namespace-operations-$nameSpace$" />
+          <param name="targetName" value="gitlab" />
+          <param name="accessLevel" value="GUEST" />
+
+        </customTask>
+        <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
+          <param name="projectName" value="$nameSpace$-operations" />
+          <param name="namespace" value="$nameSpace$-dev" />
+          <param name="groupName" value="k8s-namespace-developer-$nameSpace$" />
+          <param name="targetName" value="gitlab" />
+          <param name="accessLevel" value="GUEST" />
 
         </customTask>
 
@@ -686,6 +875,47 @@
           </param>
           <param name="kind" value="RoleBinding" />
           <param name="url" value="/apis/rbac.authorization.k8s.io/v1/namespaces/$nameSpace$-prod/rolebindings" />
+        </customTask>
+
+        <!-- Create the ArgoCD project -->
+        <customTask className="com.tremolosecurity.provisioning.tasks.CreateK8sObject">
+          <param name="targetName" value="k8s" />
+          <param name="template">
+            <![CDATA[ 
+            {
+              "apiVersion": "argoproj.io/v1alpha1",
+              "kind": "AppProject",
+              "metadata": {
+                "name": "$nameSpace$",
+                "namespace": "argocd"
+              },
+              "spec": {
+                "description": "Project for $nameSpace$",
+                "destinations": [
+                  {
+                    "namespace": "$nameSpace$-prod",
+                    "server": "https://kubernetes.default.svc"
+                  },
+                  {
+                    "namespace": "$nameSpace$-dev",
+                    "server": "https://kubernetes.default.svc"
+                  },
+                  {
+                    "namespace": "$nameSpace$-build",
+                    "server": "https://kubernetes.default.svc"
+                  }
+                ],
+                "sourceRepos": [
+                  "git@#[GITLAB_SSH_HOST]:$nameSpace$-production/$nameSpace$-build.git",
+                  "git@#[GITLAB_SSH_HOST]:$nameSpace$-production/$nameSpace$-operations.git",
+                  "git@#[GITLAB_SSH_HOST]:$nameSpace$-dev/$nameSpace$-operations.git"
+                ]
+              }
+            }
+                          ]]>
+          </param>
+          <param name="kind" value="AppProject" />
+          <param name="url" value="/apis/argoproj.io/v1alpha1/namespaces/argocd/appprojects" />
         </customTask>
 
         <notifyUser subject="Application created" mailAttrib="mail">
