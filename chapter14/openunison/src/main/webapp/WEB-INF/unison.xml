@@ -65,7 +65,7 @@
                     <rule scope="group" constraint="cn=administrators,ou=groups,ou=shadow,o=Tremolo"/>
                 </azRules>
             </orgs>
-            <orgs name="Kubernetes Namespace Administrators" description="List of projects that can be requested for administration rights" uuid="cecae082-c85d-48df-a837-4726bb755180" showInPortal="false" showInRequestsAccess="true" showInReports="false">
+            <orgs name="Application Operations" description="List of applications that can be requested for administration rights" uuid="cecae082-c85d-48df-a837-4726bb755180" showInPortal="false" showInRequestsAccess="true" showInReports="false">
                 <azRules>
                     <rule scope="dn" constraint="o=Tremolo"/>
                 </azRules>
@@ -75,7 +75,7 @@
                     <rule scope="dn" constraint="o=Tremolo"/>
                 </azRules>
             </orgs>
-            <orgs name="Kubernetes Namespace Viewers" description="Read only access to Kubernetes projects" uuid="97137c31-a417-4498-907d-e61f8686eb97" showInPortal="false" showInRequestsAccess="true" showInReports="false">
+            <orgs name="Application Developers" description="Develop applications" uuid="97137c31-a417-4498-907d-e61f8686eb97" showInPortal="false" showInRequestsAccess="true" showInReports="false">
                 <azRules>
                     <rule scope="dn" constraint="o=Tremolo"/>
                 </azRules>

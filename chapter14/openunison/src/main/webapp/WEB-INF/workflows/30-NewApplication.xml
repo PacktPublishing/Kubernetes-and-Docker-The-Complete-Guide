@@ -174,6 +174,72 @@ Fork this project to create to create your application.  Create a pull request t
             <mapping targetAttributeName="uid" targetAttributeSource="uid" sourceType="user" />
           </map>
         </mapping>
+
+
+
+<!-- Create tekton project -->
+<customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateProject">
+  <param name="namespace" value="$nameSpace$-production" />
+  <param name="name" value="$nameSpace$-build" />
+  <param name="description" value="Build project" />
+  <param name="issuesEnabled" value="true" />
+  <param name="mergeRequestsEnabled" value="true" />
+  <param name="wikiEnabled" value="true" />
+  <param name="snipitsEnabled" value="true" />
+  <param name="visibility" value="2" />
+  <param name="targetName" value="gitlab" />
+  <param name="gitSshHost" value="#[GITLAB_SSH_HOST]" />
+  <param name="createWebhook" value="false" />
+  <param name="webhookSuffix" value="#[GITLAB_WEBHOOK_SUFFIX]" />
+  <param name="webhookBranchFilter" value="master" />
+</customTask>
+
+<customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateGitFile">
+  <param name="targetName" value="gitlab" />
+  <param name="namespace" value="$nameSpace$-production" />
+  <param name="project" value="$nameSpace$-build" />
+  <param name="branch" value="master" />
+  <param name="path" value="README.md" />
+  <param name="content">
+<![CDATA[ 
+# $nameSpace$-build 
+
+Fork this project to create a build process for for $nameSpace$.  Create a pull request to deploy updates.
+
+]]>
+  </param>
+  <param name="commitMessage" value="initializing the repository" />
+
+</customTask>
+
+<customTask className="com.tremolosecurity.argocd.tasks.CreateGitRepository">
+  <param name="type" value="git" />
+  <param name="name" value="$nameSpace$-build" />
+  <param name="repoUrl" value="$gitSshInternalURL$" />
+  <param name="sshPrivateKey" value="$gitPrivateKey$" />
+  <param name="target" value="argocd" />
+</customTask>
+
+<customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
+  <param name="groupName" value="approvers-k8s-$nameSpace$" />
+  <param name="targetName" value="gitlab" />
+  <param name="accessLevel" value="MAINTAINER" />
+
+</customTask>
+<customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
+  <param name="groupName" value="k8s-namespace-operations-$nameSpace$" />
+  <param name="targetName" value="gitlab" />
+  <param name="accessLevel" value="GUEST" />
+
+</customTask>
+<customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
+  <param name="groupName" value="k8s-namespace-developer-$nameSpace$" />
+  <param name="targetName" value="gitlab" />
+  <param name="accessLevel" value="GUEST" />
+
+</customTask>
+
+
         <!-- Create Build Namespace -->
         <customTask className="com.tremolosecurity.provisioning.tasks.CreateK8sObject">
           <param name="targetName" value="k8s" />
@@ -246,7 +312,13 @@ Fork this project to create to create your application.  Create a pull request t
           <param name="url" value="/api/v1/namespaces/$nameSpace$-build/serviceaccounts" />
         </customTask>
 
+
+
+
         <!-- create the git input -->
+        
+        
+        
         <customTask className="com.tremolosecurity.provisioning.tasks.CreateK8sObject">
           <param name="targetName" value="k8s" />
           <param name="template">
@@ -277,8 +349,37 @@ Fork this project to create to create your application.  Create a pull request t
           <param name="kind" value="PipelineResource" />
           <param name="url" value="/apis/tekton.dev/v1alpha1/namespaces/$nameSpace$-build/pipelineresources" />
         </customTask>
-
+    
         <!-- create trigger template -->
+        <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateGitFile">
+          <param name="targetName" value="gitlab" />
+          <param name="namespace" value="$nameSpace$-production" />
+          <param name="project" value="$nameSpace$-build" />
+          <param name="branch" value="master" />
+          <param name="path" value="src/trigger-templates/gitlab-build-template.yaml" />
+          <param name="content">
+        <![CDATA[ 
+---
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerTemplate
+metadata:
+  name: gitlab-build-template
+spec:
+  params: []
+  resourcetemplates:
+  - apiVersion: tekton.dev/v1alpha1
+    kind: TaskRun
+    metadata:
+      generateName: build-$nameSpace$
+    spec:
+      serviceAccountName: tekton-build
+               
+        ]]>
+          </param>
+          <param name="commitMessage" value="initializing the repository" />
+        
+        </customTask>
+<!--
         <customTask className="com.tremolosecurity.provisioning.tasks.CreateK8sObject">
           <param name="targetName" value="k8s" />
           <param name="template">
@@ -313,8 +414,31 @@ Fork this project to create to create your application.  Create a pull request t
           <param name="kind" value="TriggerTemplate" />
           <param name="url" value="/apis/triggers.tekton.dev/v1alpha1/namespaces/$nameSpace$-build/triggertemplates" />
         </customTask>
+      -->
 
         <!-- create trigger binding -->
+        <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateGitFile">
+          <param name="targetName" value="gitlab" />
+          <param name="namespace" value="$nameSpace$-production" />
+          <param name="project" value="$nameSpace$-build" />
+          <param name="branch" value="master" />
+          <param name="path" value="src/trigger-bindings/gitlab-push-binding.yaml" />
+          <param name="content">
+        <![CDATA[ 
+---
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerBinding
+metadata:
+  name: gitlab-push-binding
+spec:
+  params: []        
+               
+        ]]>
+          </param>
+          <param name="commitMessage" value="initializing the repository" />
+        
+        </customTask>
+        <!--
         <customTask className="com.tremolosecurity.provisioning.tasks.CreateK8sObject">
           <param name="targetName" value="k8s" />
           <param name="template">
@@ -337,6 +461,7 @@ Fork this project to create to create your application.  Create a pull request t
           <param name="kind" value="TriggerBinding" />
           <param name="url" value="/apis/triggers.tekton.dev/v1alpha1/namespaces/$nameSpace$-build/triggerbindings" />
         </customTask>
+      -->
 
         <!-- create webhook secret -->
         <customTask className="com.tremolosecurity.provisioning.tasks.CreateK8sObject">
@@ -549,67 +674,7 @@ Fork this project to create to create your application.  Create a pull request t
         </customTask>
 
 
-        <!-- Create tekton project -->
-        <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateProject">
-          <param name="namespace" value="$nameSpace$-production" />
-          <param name="name" value="$nameSpace$-build" />
-          <param name="description" value="Build project" />
-          <param name="issuesEnabled" value="true" />
-          <param name="mergeRequestsEnabled" value="true" />
-          <param name="wikiEnabled" value="true" />
-          <param name="snipitsEnabled" value="true" />
-          <param name="visibility" value="2" />
-          <param name="targetName" value="gitlab" />
-          <param name="gitSshHost" value="#[GITLAB_SSH_HOST]" />
-          <param name="createWebhook" value="false" />
-          <param name="webhookSuffix" value="#[GITLAB_WEBHOOK_SUFFIX]" />
-          <param name="webhookBranchFilter" value="master" />
-        </customTask>
-
-        <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateGitFile">
-          <param name="targetName" value="gitlab" />
-          <param name="namespace" value="$nameSpace$-production" />
-          <param name="project" value="$nameSpace$-build" />
-          <param name="branch" value="master" />
-          <param name="path" value="README.md" />
-          <param name="content">
-<![CDATA[ 
-# $nameSpace$-build 
-
-Fork this project to create a build process for for $nameSpace$.  Create a pull request to deploy updates.
-
-]]>
-          </param>
-          <param name="commitMessage" value="initializing the repository" />
-
-        </customTask>
-
-        <customTask className="com.tremolosecurity.argocd.tasks.CreateGitRepository">
-          <param name="type" value="git" />
-          <param name="name" value="$nameSpace$-build" />
-          <param name="repoUrl" value="$gitSshInternalURL$" />
-          <param name="sshPrivateKey" value="$gitPrivateKey$" />
-          <param name="target" value="argocd" />
-        </customTask>
-
-        <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
-          <param name="groupName" value="approvers-k8s-$nameSpace$" />
-          <param name="targetName" value="gitlab" />
-          <param name="accessLevel" value="MAINTAINER" />
-
-        </customTask>
-        <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
-          <param name="groupName" value="k8s-namespace-operations-$nameSpace$" />
-          <param name="targetName" value="gitlab" />
-          <param name="accessLevel" value="GUEST" />
-
-        </customTask>
-        <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
-          <param name="groupName" value="k8s-namespace-developer-$nameSpace$" />
-          <param name="targetName" value="gitlab" />
-          <param name="accessLevel" value="GUEST" />
-
-        </customTask>
+        
 
         
 
@@ -916,6 +981,151 @@ Fork this project to create manifests for $nameSpace$.  Create a pull request to
           </param>
           <param name="kind" value="AppProject" />
           <param name="url" value="/apis/argoproj.io/v1alpha1/namespaces/argocd/appprojects" />
+        </customTask>
+
+        <!-- Create the ArgoCD applications -->
+        <customTask className="com.tremolosecurity.provisioning.tasks.CreateK8sObject">
+          <param name="targetName" value="k8s" />
+          <param name="template">
+            <![CDATA[ 
+            {
+              "apiVersion": "argoproj.io/v1alpha1",
+              "kind": "Application",
+              "metadata": {
+                  "name": "$nameSpace$-build",
+                  "namespace": "argocd"
+              },
+              "spec": {
+                  "destination": {
+                      "namespace": "$nameSpace$-build",
+                      "server": "https://kubernetes.default.svc"
+                  },
+                  "project": "$nameSpace$",
+                  "source": {
+                      "directory": {
+                          "jsonnet": {},
+                          "recurse": true
+                      },
+                      "path": "src",
+                      "repoURL": "git@#[GITLAB_SSH_HOST]:$nameSpace$-production/$nameSpace$-build.git",
+                      "targetRevision": "HEAD"
+                  },
+                  "syncPolicy": {
+                      "automated": {}
+                  }
+              }
+            }
+                          ]]>
+          </param>
+          <param name="kind" value="Application" />
+          <param name="url" value="/apis/argoproj.io/v1alpha1/namespaces/argocd/applications" />
+        </customTask>
+
+        <customTask className="com.tremolosecurity.provisioning.tasks.CreateK8sObject">
+          <param name="targetName" value="k8s" />
+          <param name="template">
+            <![CDATA[ 
+            {
+              "apiVersion": "argoproj.io/v1alpha1",
+              "kind": "Application",
+              "metadata": {
+                  "name": "$nameSpace$-dev",
+                  "namespace": "argocd"
+              },
+              "spec": {
+                  "destination": {
+                      "namespace": "$nameSpace$-dev",
+                      "server": "https://kubernetes.default.svc"
+                  },
+                  "project": "$nameSpace$",
+                  "source": {
+                      "directory": {
+                          "jsonnet": {},
+                          "recurse": true
+                      },
+                      "path": "src",
+                      "repoURL": "git@#[GITLAB_SSH_HOST]:$nameSpace$-dev/$nameSpace$-application.git",
+                      "targetRevision": "HEAD"
+                  },
+                  "syncPolicy": {
+                      "automated": {}
+                  }
+              }
+            }
+                          ]]>
+          </param>
+          <param name="kind" value="Application" />
+          <param name="url" value="/apis/argoproj.io/v1alpha1/namespaces/argocd/applications" />
+        </customTask>
+
+        <customTask className="com.tremolosecurity.provisioning.tasks.CreateK8sObject">
+          <param name="targetName" value="k8s" />
+          <param name="template">
+            <![CDATA[ 
+            {
+              "apiVersion": "argoproj.io/v1alpha1",
+              "kind": "Application",
+              "metadata": {
+                  "name": "$nameSpace$-production",
+                  "namespace": "argocd"
+              },
+              "spec": {
+                  "destination": {
+                      "namespace": "$nameSpace$-production",
+                      "server": "https://kubernetes.default.svc"
+                  },
+                  "project": "$nameSpace$",
+                  "source": {
+                      "directory": {
+                          "jsonnet": {},
+                          "recurse": true
+                      },
+                      "path": "src",
+                      "repoURL": "git@#[GITLAB_SSH_HOST]:$nameSpace$-production/$nameSpace$-application.git",
+                      "targetRevision": "HEAD"
+                  },
+                  "syncPolicy": {
+                      "automated": {}
+                  }
+              }
+            }
+                          ]]>
+          </param>
+          <param name="kind" value="Application" />
+          <param name="url" value="/apis/argoproj.io/v1alpha1/namespaces/argocd/applications" />
+        </customTask>
+
+        <customTask className="com.tremolosecurity.argocd.tasks.AddtoRBAC">
+          <param name="k8sTarget" value="k8s" />
+          <param name="toAdd">
+            <![CDATA[ 
+p, role:$nameSpace$-operations, applications, get, $nameSpace$-build/*, allow
+p, role:$nameSpace$-operations, applications, override, $nameSpace$-build/*, allow
+p, role:$nameSpace$-operations, applications, sync, $nameSpace$-build/*, allow
+p, role:$nameSpace$-operations, applications, update, $nameSpace$-build/*, allow
+
+p, role:$nameSpace$-operations, applications, get, $nameSpace$-dev/*, allow
+p, role:$nameSpace$-operations, applications, override, $nameSpace$-dev/*, allow
+p, role:$nameSpace$-operations, applications, sync, $nameSpace$-dev/*, allow
+p, role:$nameSpace$-operations, applications, update, $nameSpace$-dev/*, allow
+
+p, role:$nameSpace$-operations, applications, get, $nameSpace$-production/*, allow
+p, role:$nameSpace$-operations, applications, override, $nameSpace$-production/*, allow
+p, role:$nameSpace$-operations, applications, sync, $nameSpace$-production/*, allow
+p, role:$nameSpace$-operations, applications, update, $nameSpace$-production/*, allow
+p, role:$nameSpace$-operations, projects, get, $nameSpace$, allow
+
+g, k8s-namespace-operations-$nameSpace$, role:$nameSpace$-operations
+
+
+p, role:$nameSpace$-dev, applications, get, $nameSpace$-build/*, allow
+p, role:$nameSpace$-dev, applications, get, $nameSpace$-dev/*, allow
+p, role:$nameSpace$-dev, applications, get, $nameSpace$-production/*, allow
+p, role:$nameSpace$-dev, projects, get, $nameSpace$, allow
+
+g, k8s-namespace-developer-$nameSpace$, role:$nameSpace$-dev
+                          ]]>
+          </param>
         </customTask>
 
         <notifyUser subject="Application created" mailAttrib="mail">

@@ -18,10 +18,10 @@ public class MapGitlabGroups implements CustomTask {
         for (String group : user.getGroups()) {
             if (group.startsWith("approvers-k8s-")) {
                 groupmap.put(group, 40);
-            } else if (group.startsWith("k8s-namespace-administrators")) {
-                groupmap.put(group,30);
+            } else if (group.startsWith("k8s-namespace-developer")) {
+                groupmap.put(group,10);
             } else if (group.startsWith("k8s-namespace-operations")) {
-                groupmap.put(group,30);
+                groupmap.put(group,10);
             }
         }
 
