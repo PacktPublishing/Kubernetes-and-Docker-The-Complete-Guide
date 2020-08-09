@@ -116,13 +116,13 @@ Fork this project to create to create your application.  Create a pull request t
         <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
           <param name="groupName" value="k8s-namespace-operations-$nameSpace$" />
           <param name="targetName" value="gitlab" />
-          <param name="accessLevel" value="GUEST" />
+          <param name="accessLevel" value="DEVELOPER" />
 
         </customTask>
         <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
           <param name="groupName" value="k8s-namespace-developer-$nameSpace$" />
           <param name="targetName" value="gitlab" />
-          <param name="accessLevel" value="GUEST" />
+          <param name="accessLevel" value="DEVELOPER" />
 
         </customTask>
 
@@ -146,7 +146,7 @@ Fork this project to create to create your application.  Create a pull request t
           <param name="namespace" value="$nameSpace$-dev" />
           <param name="groupName" value="k8s-namespace-operations-$nameSpace$" />
           <param name="targetName" value="gitlab" />
-          <param name="accessLevel" value="GUEST" />
+          <param name="accessLevel" value="DEVELOPER" />
 
         </customTask>
         <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
@@ -155,7 +155,7 @@ Fork this project to create to create your application.  Create a pull request t
           <param name="groupName" value="k8s-namespace-developer-$nameSpace$" />
           
           <param name="targetName" value="gitlab" />
-          <param name="accessLevel" value="GUEST" />
+          <param name="accessLevel" value="DEVELOPER" />
 
         </customTask>
 
@@ -229,13 +229,13 @@ Fork this project to create a build process for for $nameSpace$.  Create a pull 
 <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
   <param name="groupName" value="k8s-namespace-operations-$nameSpace$" />
   <param name="targetName" value="gitlab" />
-  <param name="accessLevel" value="GUEST" />
+  <param name="accessLevel" value="DEVELOPER" />
 
 </customTask>
 <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
   <param name="groupName" value="k8s-namespace-developer-$nameSpace$" />
   <param name="targetName" value="gitlab" />
-  <param name="accessLevel" value="GUEST" />
+  <param name="accessLevel" value="DEVELOPER" />
 
 </customTask>
 
@@ -731,13 +731,13 @@ Fork this project to create manifests for $nameSpace$.  Create a pull request to
         <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
           <param name="groupName" value="k8s-namespace-operations-$nameSpace$" />
           <param name="targetName" value="gitlab" />
-          <param name="accessLevel" value="GUEST" />
+          <param name="accessLevel" value="DEVELOPER" />
 
         </customTask>
         <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
           <param name="groupName" value="k8s-namespace-developer-$nameSpace$" />
           <param name="targetName" value="gitlab" />
-          <param name="accessLevel" value="GUEST" />
+          <param name="accessLevel" value="DEVELOPER" />
 
         </customTask>
 
@@ -761,7 +761,7 @@ Fork this project to create manifests for $nameSpace$.  Create a pull request to
           <param name="namespace" value="$nameSpace$-dev" />
           <param name="groupName" value="k8s-namespace-operations-$nameSpace$" />
           <param name="targetName" value="gitlab" />
-          <param name="accessLevel" value="GUEST" />
+          <param name="accessLevel" value="DEVELOPER" />
 
         </customTask>
         <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
@@ -769,7 +769,7 @@ Fork this project to create manifests for $nameSpace$.  Create a pull request to
           <param name="namespace" value="$nameSpace$-dev" />
           <param name="groupName" value="k8s-namespace-developer-$nameSpace$" />
           <param name="targetName" value="gitlab" />
-          <param name="accessLevel" value="GUEST" />
+          <param name="accessLevel" value="DEVELOPER" />
 
         </customTask>
 

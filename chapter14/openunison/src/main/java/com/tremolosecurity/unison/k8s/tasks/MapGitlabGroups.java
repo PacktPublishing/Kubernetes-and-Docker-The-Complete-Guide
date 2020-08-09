@@ -19,9 +19,9 @@ public class MapGitlabGroups implements CustomTask {
             if (group.startsWith("approvers-k8s-")) {
                 groupmap.put(group, 40);
             } else if (group.startsWith("k8s-namespace-developer")) {
-                groupmap.put(group,10);
+                groupmap.put(group,30);
             } else if (group.startsWith("k8s-namespace-operations")) {
-                groupmap.put(group,10);
+                groupmap.put(group,30);
             }
         }
 
