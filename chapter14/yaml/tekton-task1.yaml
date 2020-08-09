@@ -1,0 +1,21 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: generate-image-tag
+  namespace: python-hello-build
+spec:
+  results:
+    - name: image-url
+      description: the image url including the tag with the current timestamp
+  resources:
+    outputs:
+    - name: result-image
+      type: image
+  steps:
+  - name: create-image-tag
+    image: ubuntu
+    script: |-
+      #!/usr/bin/env bash
+      export IMAGE_TAG=$(date +"%m%d%Y%H%M%S")
+      echo -n "$(resources.outputs.result-image.url):$IMAGE_TAG" > /tekton/results/image-url
+      echo "'$(cat /tekton/results/image-url)'"
