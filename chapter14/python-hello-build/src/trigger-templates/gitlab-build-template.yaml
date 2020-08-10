@@ -1,0 +1,32 @@
+
+---
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerTemplate
+metadata:
+  name: gitlab-build-template
+spec:
+  resourcetemplates:
+  - apiVersion: tekton.dev/v1alpha1
+    kind: PipelineRun
+    metadata:
+      generateName: build-python-hello40
+    spec:
+      serviceAccountName: tekton-build
+      pipelineRef:
+        name: build-hello-pipeline
+      resources:
+        - name: git-source-resource
+          resourceRef:
+            name: git-source-resource
+        - name: result-image
+          resourceRef:
+            name: result-image
+      params:
+      - name: gitPushUrl
+        value: git@gitlab-write-shell.gitlab.svc.cluster.local:python-hello40-production/python-hello40-build.git
+      workspaces:
+      - name: output
+        emptyDir: {}
+
+
+          
