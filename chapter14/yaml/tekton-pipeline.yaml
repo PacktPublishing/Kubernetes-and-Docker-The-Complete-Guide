@@ -9,11 +9,21 @@ spec:
     type: git
   - name: result-image
     type: image
+  params:
+  - default: none
+    description: git push url
+    name: gitPushUrl
+    type: string
+  workspaces:
+  - name: output
   tasks:
     - name: generate-image-tag
       taskRef:
         name: generate-image-tag
       resources:
+        inputs:
+        - name: git-resource
+          resource: git-source-resource
         outputs:
         - name: result-image
           resource: result-image
@@ -34,4 +44,17 @@ spec:
         outputs:
         - name: result-image
           resource: result-image
+    - name: update-operations-git
+      taskRef: 
+        name: patch-deployment
+      params:
+        - name: imageURL
+          value: $(tasks.generate-image-tag.results.image-url)
+        - name: gitURL
+          value: $(params.gitPushUrl)
+        - name: sourceGitHash
+          value: $(tasks.generate-image-tag.results.commit-tag)
+      workspaces:
+      - name: output
+        workspace: output
       

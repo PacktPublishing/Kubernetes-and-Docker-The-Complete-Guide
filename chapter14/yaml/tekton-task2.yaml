@@ -19,9 +19,6 @@ spec:
     description: image url
     name: imageURL
     type: string
-  results:
-    - name: image-tag
-      description: the tag to use for the image based on the current timestamp
   resources:
     inputs:
     - name: git-resource
