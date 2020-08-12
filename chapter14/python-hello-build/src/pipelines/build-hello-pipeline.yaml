@@ -29,6 +29,8 @@ spec:
     - name: build-hello-python
       taskRef:
         name: build-hello-python
+      runAfter: 
+      - generate-image-tag
       params:
       - name: pathToDockerFile
         value: $(resources.inputs.git-resource.path)/source/Dockerfile
@@ -46,6 +48,8 @@ spec:
     - name: update-operations-git
       taskRef: 
         name: patch-deployment
+      runAfter: 
+      - build-hello-python
       params:
         - name: imageURL
           value: $(tasks.generate-image-tag.results.image-url)
@@ -56,4 +60,5 @@ spec:
       workspaces:
       - name: output
         workspace: output
+      
       

@@ -17,7 +17,7 @@ spec:
       type: image
   steps:
   - name: create-image-tag
-    image: docker.apps.192-168-2-114.nip.io/gitcommit/gitcommit
+    image: docker.apps.192-168-2-140.nip.io/gitcommit/gitcommit
     script: |-
       #!/usr/bin/env bash
       export IMAGE_TAG=$(date +"%m%d%Y%H%M%S")

@@ -86,6 +86,18 @@ Fork this project to create a build process for for $nameSpace$.  Create a pull 
           <param name="kind" value="Namespace" />
           <param name="url" value="/api/v1/namespaces" />
         </customTask>
+        <!-- Create read only secret to pull code from the application repository -->
+        <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateDeploymentKey">
+          <param name="targetName" value="gitlab" />
+          <param name="namespace" value="$nameSpace$-production" />
+          <param name="project" value="$nameSpace$-application" />
+          <param name="keyLabel" value="tekton_pull" />
+          <param name="makeWriteable" value="false" />
+          <param name="privateKeyReuestName" value="tektonPullecret" />
+          <param name="privateKeyReuestNamePT" value="tektonPullSecretPT" />
+        </customTask>
+
+
         <!-- create git pull secret -->
         <customTask className="com.tremolosecurity.provisioning.tasks.CreateK8sObject">
           <param name="targetName" value="k8s" />
@@ -102,7 +114,7 @@ Fork this project to create a build process for for $nameSpace$.  Create a pull 
     }
   },
   "data": {
-    "ssh-privatekey": "$base64SshPrivateKey$"
+    "ssh-privatekey": "$tektonPullecret$"
   },
   "type": "kubernetes.io/ssh-auth"
 }
@@ -159,7 +171,7 @@ Fork this project to create a build process for for $nameSpace$.  Create a pull 
                 "params": [
                   {
                     "name": "url",
-                    "value": "$gitSshInternalURL$"
+                    "value": "git@#[GITLAB_SSH_HOST]:$nameSpace$-production/$nameSpace$-application.git"
                   },
                   {
                     "name": "revision",
@@ -177,12 +189,12 @@ Fork this project to create a build process for for $nameSpace$.  Create a pull 
         <!-- Create writeable secret so builds can update the operations repository -->
         <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateDeploymentKey">
           <param name="targetName" value="gitlab" />
-          <param name="namespace" value="$nameSpace$-production" />
-          <param name="project" value="$nameSpace$-build" />
+          <param name="namespace" value="$nameSpace$-dev" />
+          <param name="project" value="$nameSpace$-operations" />
           <param name="keyLabel" value="tekton_push" />
           <param name="makeWriteable" value="true" />
           <param name="privateKeyReuestName" value="tektonPushSecret" />
-          <param name="privateKeyReuestNamePT" value="tektonPullSecretPT" />
+          <param name="privateKeyReuestNamePT" value="tektonPushSecretPT" />
         </customTask>
 
          <!-- create git push secret -->
@@ -195,10 +207,7 @@ Fork this project to create a build process for for $nameSpace$.  Create a pull 
   "apiVersion": "v1",
   "metadata": {
     "name": "git-write",
-    "namespace": "$nameSpace$-build",
-    "annotations":{
-      "tekton.dev/git-0":"#[GITLAB_WRITE_SSH_HOST]"  
-    }
+    "namespace": "$nameSpace$-build"
   },
   "data": {
     "ssh-privatekey": "$tektonPushSecret$"

@@ -91,14 +91,16 @@
         </mapping>
 
 
-        <!-- Create Tekton build project in Gitlab and namespace in k8s -->
-        <callWorkflow name="create-tekton"/>
+        
 
         <!-- Create the production namespace and gitlab project -->
         <callWorkflow name="create-operations-production"/>
 
         <!-- Create the dev namespace as a fork from the production project -->
         <callWorkflow name="create-operations-dev"/>
+
+        <!-- Create Tekton build project in Gitlab and namespace in k8s -->
+        <callWorkflow name="create-tekton"/>
 
         <!-- Create ArgoCD objects -->
         <callWorkflow name="configure-argo" />

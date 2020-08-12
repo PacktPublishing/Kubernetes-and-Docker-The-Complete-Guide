@@ -1,4 +1,4 @@
-<workflow name="new-application-production" label="New Application" description="Creates a new kubernetes namespace and associated groups to manage approvals" inList="false" orgid="B158BD40-0C1B-11E3-8FFD-0800200C9A66">
+<workflow name="configure-argo" label="New Application" description="Creates a new kubernetes namespace and associated groups to manage approvals" inList="false" orgid="B158BD40-0C1B-11E3-8FFD-0800200C9A66">
     <dynamicConfiguration dynamic="false" />
     <tasks>
         <!-- Create the ArgoCD project -->
@@ -130,7 +130,7 @@
               },
               "spec": {
                   "destination": {
-                      "namespace": "$nameSpace$-production",
+                      "namespace": "$nameSpace$-prod",
                       "server": "https://kubernetes.default.svc"
                   },
                   "project": "$nameSpace$",

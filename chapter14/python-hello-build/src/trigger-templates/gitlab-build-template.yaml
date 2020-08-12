@@ -17,13 +17,13 @@ spec:
       resources:
         - name: git-source-resource
           resourceRef:
-            name: git-source-resource
+            name: git-resource
         - name: result-image
           resourceRef:
             name: result-image
       params:
       - name: gitPushUrl
-        value: git@gitlab-write-shell.gitlab.svc.cluster.local:python-hello40-production/python-hello40-build.git
+        value: git@gitlab-gitlab-shell.gitlab.svc.cluster.local:python-hello70-dev/python-hello70-operations.git
       workspaces:
       - name: output
         emptyDir: {}
