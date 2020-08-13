@@ -1,0 +1,12 @@
+<!-- The name attribute is how the resultGroup is referenced in the URL -->
+<resultGroup name="ScaleJSRedirect">
+  <!-- Each result should be listed -->
+  <result>
+    <!-- The type of result, one of cookie, header or redirect -->
+    <type>redirect</type>
+    <!-- The source of the result value, one of user, static, custom -->
+    <source>static</source>
+    <!-- Name of the resuler (in this case a cookie) and the value -->
+    <value>/scale/index.html</value>
+  </result>
+</resultGroup>

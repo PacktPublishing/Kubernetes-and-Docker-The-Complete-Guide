@@ -1,0 +1,9 @@
+<!-- An anonymous authentication chain MUST be level 0 -->
+<chain name="anon" level="0">
+  <authMech>
+    <name>anonymous</name>
+    <required>required</required>
+    <params>
+    </params>
+  </authMech>
+</chain>

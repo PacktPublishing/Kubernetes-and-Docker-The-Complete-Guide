@@ -1,0 +1,153 @@
+<workflow name="create-operations-production" label="New Application" description="Creates a new kubernetes namespace and associated groups to manage approvals" inList="false" orgid="B158BD40-0C1B-11E3-8FFD-0800200C9A66">
+    <dynamicConfiguration dynamic="false" />
+    <tasks>
+        <!-- Create operations project -->
+        <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateProject">
+          <param name="namespace" value="$nameSpace$-production" />
+          <param name="name" value="$nameSpace$-operations" />
+          <param name="description" value="Operations project" />
+          <param name="issuesEnabled" value="true" />
+          <param name="mergeRequestsEnabled" value="true" />
+          <param name="wikiEnabled" value="true" />
+          <param name="snipitsEnabled" value="true" />
+          <param name="visibility" value="2" />
+          <param name="targetName" value="gitlab" />
+          <param name="gitSshHost" value="#[GITLAB_SSH_HOST]" />
+          <param name="createWebhook" value="false" />
+          <param name="webhookSuffix" value="#[GITLAB_WEBHOOK_SUFFIX]" />
+          <param name="webhookBranchFilter" value="master" />
+        </customTask>
+
+        <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateGitFile">
+          <param name="targetName" value="gitlab" />
+          <param name="namespace" value="$nameSpace$-production" />
+          <param name="project" value="$nameSpace$-operations" />
+          <param name="branch" value="master" />
+          <param name="path" value="README.md" />
+          <param name="content">
+<![CDATA[ 
+# $nameSpace$-build 
+
+Fork this project to create manifests for $nameSpace$.  Create a pull request to deploy updates.
+
+]]>
+          </param>
+          <param name="commitMessage" value="initializing the repository" />
+
+        </customTask>
+
+        <!-- Add the argocd repository -->
+        <customTask className="com.tremolosecurity.argocd.tasks.CreateGitRepository">
+          <param name="type" value="git" />
+          <param name="name" value="$nameSpace$-operations" />
+          <param name="repoUrl" value="$gitSshInternalURL$" />
+          <param name="sshPrivateKey" value="$gitPrivateKey$" />
+          <param name="target" value="argocd" />
+        </customTask>
+
+        <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
+          <param name="groupName" value="approvers-k8s-$nameSpace$" />
+          <param name="targetName" value="gitlab" />
+          <param name="accessLevel" value="MAINTAINER" />
+
+        </customTask>
+        <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
+          <param name="groupName" value="k8s-namespace-operations-$nameSpace$" />
+          <param name="targetName" value="gitlab" />
+          <param name="accessLevel" value="DEVELOPER" />
+
+        </customTask>
+        <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject">
+          <param name="groupName" value="k8s-namespace-developer-$nameSpace$" />
+          <param name="targetName" value="gitlab" />
+          <param name="accessLevel" value="DEVELOPER" />
+
+        </customTask>
+
+        <!-- Create production namespace -->
+        <customTask className="com.tremolosecurity.provisioning.tasks.CreateK8sObject">
+          <param name="targetName" value="k8s" />
+          <param name="template">
+            <![CDATA[ 
+{
+"kind": "Namespace",
+"apiVersion": "v1",
+"metadata": {
+"name": "$nameSpace$-prod",
+"labels": {
+"name": "$nameSpace$-prod",
+"application":"$nameSpace$",
+"type": "application",
+"env": "prod"
+}
+}
+}
+]]>
+          </param>
+          <param name="kind" value="Namespace" />
+          <param name="url" value="/api/v1/namespaces" />
+        </customTask>
+
+
+        <customTask className="com.tremolosecurity.provisioning.tasks.CreateK8sObject">
+          <param name="targetName" value="k8s" />
+          <param name="template">
+            <![CDATA[ 
+      {
+          "kind": "RoleBinding",
+          "apiVersion": "rbac.authorization.k8s.io/v1",
+          "metadata": {
+            "name": "operations-binding",
+            "namespace": "$nameSpace$-prod"
+          },
+          "subjects": [
+            {
+              "kind": "Group",
+              "name": "k8s-namespace-operations-$nameSpace$",
+              "apiGroup": "rbac.authorization.k8s.io"
+            }
+          ],
+          "roleRef": {
+            "kind": "ClusterRole",
+            "name": "admin",
+            "apiGroup": "rbac.authorization.k8s.io"
+          }
+        }
+        ]]>
+          </param>
+          <param name="kind" value="RoleBinding" />
+          <param name="url" value="/apis/rbac.authorization.k8s.io/v1/namespaces/$nameSpace$-prod/rolebindings" />
+        </customTask>
+
+
+        <customTask className="com.tremolosecurity.provisioning.tasks.CreateK8sObject">
+          <param name="targetName" value="k8s" />
+          <param name="template">
+            <![CDATA[ 
+                        {
+                            "kind": "RoleBinding",
+                            "apiVersion": "rbac.authorization.k8s.io/v1",
+                            "metadata": {
+                              "name": "developers-binding",
+                              "namespace": "$nameSpace$-prod"
+                            },
+                            "subjects": [
+                              {
+                                "kind": "Group",
+                                "name": "k8s-namespace-developer-$nameSpace$",
+                                "apiGroup": "rbac.authorization.k8s.io"
+                              }
+                            ],
+                            "roleRef": {
+                              "kind": "ClusterRole",
+                              "name": "view",
+                              "apiGroup": "rbac.authorization.k8s.io"
+                            }
+                          }
+                          ]]>
+          </param>
+          <param name="kind" value="RoleBinding" />
+          <param name="url" value="/apis/rbac.authorization.k8s.io/v1/namespaces/$nameSpace$-prod/rolebindings" />
+        </customTask>
+    </tasks>
+</workflow>

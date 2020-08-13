@@ -1,0 +1,10 @@
+
+---
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerBinding
+metadata:
+  name: gitlab-push-binding
+spec: {}
+
+
+          

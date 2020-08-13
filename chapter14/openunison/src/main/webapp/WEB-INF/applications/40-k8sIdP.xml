@@ -1,0 +1,75 @@
+<application name="k8sIdp" isApp="false" azTimeoutMillis="30000">
+        <results/>
+        <urls>
+            <url regex="false">
+                <host>#[OU_HOST]</host>
+                    <host>127.0.0.1</host>
+                <filterChain/>
+                <uri>/auth/idp/k8sIdp</uri>
+                <results>
+                    <auSuccess></auSuccess>
+                    <auFail>Default Login Failure</auFail>
+                    <azSuccess></azSuccess>
+                    <azFail>Default Login Failure</azFail>
+                </results>
+                <azRules>
+                    <rule scope="dn" constraint="o=Tremolo"/>
+                </azRules>
+                <idp className="com.tremolosecurity.idp.providers.OpenIDConnectIdP">
+                    <params name="jwtSigningKey" value="unison-saml2-rp-sig"/>
+                    <params name="driver" value="#[OU_JDBC_DRIVER]"/>
+                    <params name="url" value="#[OU_JDBC_URL]"/>
+                    <params name="user" value="#[OU_JDBC_USER]"/>
+                    <params name="password" value="#[OU_JDBC_PASSWORD]"/>
+                    <params name="maxCons" value="10"/>
+                    <params name="maxIdleCons" value="10"/>
+                    <params name="dialect" value="#[OU_HIBERNATE_DIALECT]"/>
+                    <params name="validationQuery" value="#[OU_JDBC_VALIDATION]"/>
+                    <params name="trustConfigurationClassName" value="com.tremolosecurity.oidc.k8s.K8sLoadTrusts" />
+                    <params name="trusts.k8starget" value="k8s" />
+                    <params name="trusts.namespace" value="#[K8S_OPENUNISON_NS:openunison]" />
+                    
+                    <mappings strict="true">
+                        <mapping targetAttributeName="sub" targetAttributeSource="uid" sourceType="user"/>
+                        <mapping targetAttributeName="name" targetAttributeSource="${givenname} ${sn}" sourceType="composite"/>
+                        <mapping targetAttributeName="preferred_username" targetAttributeSource="uid" sourceType="user"/>
+                        <mapping targetAttributeName="email" targetAttributeSource="mail" sourceType="user"/>
+                        <mapping targetAttributeName="groups" targetAttributeSource="groups" sourceType="user"/>
+                    </mappings>
+                    <trusts>
+                        <trust name="#[K8S_URL]">
+                          <param name="clientID" value="kubernetes"/>
+                          <param name="clientSecret" value=""/>
+                          <param name="publicEndpoint" value="true" />
+                          <param name="redirectURI" value="#[K8S_URL]/redirect_uri"/>
+                          <param name="codeLastMileKeyName" value="lastmile-oidc"/>
+                          <param name="authChainName" value="LoginService"/>
+                          <param name="codeTokenSkewMilis" value="60000"/>
+                          <param name="accessTokenTimeToLive" value="60000"/>
+                          <param name="accessTokenSkewMillis" value="120000" />
+                        </trust>
+                        <trust name="https://#[K8S_DASHBOARD_HOST]">
+                          <param name="clientID" value="openunison"/>
+                          <param name="clientSecret" value="#[K8S_DB_SECRET]"/>
+                          <param name="publicEndpoint" value="false" />
+                          <param name="redirectURI" value="https://#[K8S_DASHBOARD_HOST]/auth/oidc"/>
+                          <param name="codeLastMileKeyName" value="lastmile-oidc"/>
+                          <param name="authChainName" value="LoginService"/>
+                          <param name="codeTokenSkewMilis" value="60000"/>
+                          <param name="accessTokenTimeToLive" value="60000"/>
+                          <param name="accessTokenSkewMillis" value="120000" />
+                        </trust>
+                    </trusts>
+                </idp>
+            </url>
+        </urls>
+        <cookieConfig>
+            <sessionCookieName>tremolosession</sessionCookieName>
+            <domain>#[OU_HOST]</domain>
+            <scope>-1</scope>
+            <logoutURI>/logout</logoutURI>
+            <keyAlias>session-unison</keyAlias>
+            <secure>true</secure>
+            <timeout>#[SESSION_INACTIVITY_TIMEOUT_SECONDS]</timeout>
+        </cookieConfig>
+    </application>

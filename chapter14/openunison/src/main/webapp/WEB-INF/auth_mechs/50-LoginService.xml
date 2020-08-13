@@ -1,0 +1,7 @@
+<mechanism name="LoginService">
+  <uri>/auth/loginService</uri>
+  <className>com.tremolosecurity.proxy.auth.LoginService</className>
+  <init>
+  </init>
+  <params></params>
+</mechanism>

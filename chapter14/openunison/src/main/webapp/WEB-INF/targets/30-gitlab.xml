@@ -1,0 +1,12 @@
+<target name="gitlab" className="com.tremolosecurity.unison.gitlab.provisioning.targets.GitlabUserProvider">
+    <params>
+        <param name="url" value="#[GITLAB_URL]"/>
+        <param name="token" value="#[GITLAB_TOKEN]"/>
+    </params>
+    <targetAttribute name="username" source="username" sourceType="user"/>
+    <targetAttribute name="email" source="email" sourceType="user"/>
+    <targetAttribute name="name" source="name" sourceType="user"/>
+    <targetAttribute name="isAdmin" source="isAdmin" sourceType="user"/>
+    <targetAttribute name="skipConfirmation" source="true" sourceType="static"/>
+    <targetAttribute name="projectsLimit" source="100000" sourceType="static" />
+</target>

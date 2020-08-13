@@ -1,0 +1,22 @@
+apiVersion: openunison.tremolo.io/v1
+kind: Trust
+metadata:
+  labels:
+    openunison.io/instance: orchestra
+  name: gitlab
+  namespace: openunison
+spec:
+  accessTokenSkewMillis: 120000
+  accessTokenTimeToLive: 60000
+  authChainName: LoginService
+  clientId: gitlab
+  clientSecret:
+    keyName: gitlab
+    secretName: orchestra-secrets-source
+  codeLastMileKeyName: lastmile-oidc
+  codeTokenSkewMilis: 60000
+  publicEndpoint: false
+  redirectURI:
+  - https://gitlab.apps.192-168-2-140.nip.io/users/auth/openid_connect/callback
+  signedUserInfo: false
+  verifyRedirect: true

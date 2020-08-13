@@ -21,6 +21,8 @@ nodes:
     hostPort: 80
   - containerPort: 443
     hostPort: 443
+  - containerPort: 2222
+    hostPort: 2222
   extraMounts:
   - hostPath: /dev
     containerPath: /dev

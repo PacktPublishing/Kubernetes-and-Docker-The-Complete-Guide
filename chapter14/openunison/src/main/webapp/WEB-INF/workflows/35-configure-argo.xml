@@ -1,0 +1,178 @@
+<workflow name="configure-argo" label="New Application" description="Creates a new kubernetes namespace and associated groups to manage approvals" inList="false" orgid="B158BD40-0C1B-11E3-8FFD-0800200C9A66">
+    <dynamicConfiguration dynamic="false" />
+    <tasks>
+        <!-- Create the ArgoCD project -->
+        <customTask className="com.tremolosecurity.provisioning.tasks.CreateK8sObject">
+          <param name="targetName" value="k8s" />
+          <param name="template">
+            <![CDATA[ 
+            {
+              "apiVersion": "argoproj.io/v1alpha1",
+              "kind": "AppProject",
+              "metadata": {
+                "name": "$nameSpace$",
+                "namespace": "argocd"
+              },
+              "spec": {
+                "description": "Project for $nameSpace$",
+                "destinations": [
+                  {
+                    "namespace": "$nameSpace$-prod",
+                    "server": "https://kubernetes.default.svc"
+                  },
+                  {
+                    "namespace": "$nameSpace$-dev",
+                    "server": "https://kubernetes.default.svc"
+                  },
+                  {
+                    "namespace": "$nameSpace$-build",
+                    "server": "https://kubernetes.default.svc"
+                  }
+                ],
+                "sourceRepos": [
+                  "git@#[GITLAB_SSH_HOST]:$nameSpace$-production/$nameSpace$-build.git",
+                  "git@#[GITLAB_SSH_HOST]:$nameSpace$-production/$nameSpace$-operations.git",
+                  "git@#[GITLAB_SSH_HOST]:$nameSpace$-dev/$nameSpace$-operations.git"
+                ]
+              }
+            }
+                          ]]>
+          </param>
+          <param name="kind" value="AppProject" />
+          <param name="url" value="/apis/argoproj.io/v1alpha1/namespaces/argocd/appprojects" />
+        </customTask>
+
+        <!-- Create the ArgoCD applications -->
+        <customTask className="com.tremolosecurity.provisioning.tasks.CreateK8sObject">
+          <param name="targetName" value="k8s" />
+          <param name="template">
+            <![CDATA[ 
+            {
+              "apiVersion": "argoproj.io/v1alpha1",
+              "kind": "Application",
+              "metadata": {
+                  "name": "$nameSpace$-build",
+                  "namespace": "argocd"
+              },
+              "spec": {
+                  "destination": {
+                      "namespace": "$nameSpace$-build",
+                      "server": "https://kubernetes.default.svc"
+                  },
+                  "project": "$nameSpace$",
+                  "source": {
+                      "directory": {
+                          "jsonnet": {},
+                          "recurse": true
+                      },
+                      "path": "src",
+                      "repoURL": "git@#[GITLAB_SSH_HOST]:$nameSpace$-production/$nameSpace$-build.git",
+                      "targetRevision": "HEAD"
+                  },
+                  "syncPolicy": {
+                      "automated": {}
+                  }
+              }
+            }
+                          ]]>
+          </param>
+          <param name="kind" value="Application" />
+          <param name="url" value="/apis/argoproj.io/v1alpha1/namespaces/argocd/applications" />
+        </customTask>
+
+        <customTask className="com.tremolosecurity.provisioning.tasks.CreateK8sObject">
+          <param name="targetName" value="k8s" />
+          <param name="template">
+            <![CDATA[ 
+            {
+              "apiVersion": "argoproj.io/v1alpha1",
+              "kind": "Application",
+              "metadata": {
+                  "name": "$nameSpace$-dev",
+                  "namespace": "argocd"
+              },
+              "spec": {
+                  "destination": {
+                      "namespace": "$nameSpace$-dev",
+                      "server": "https://kubernetes.default.svc"
+                  },
+                  "project": "$nameSpace$",
+                  "source": {
+                      "directory": {
+                          "jsonnet": {},
+                          "recurse": true
+                      },
+                      "path": "src",
+                      "repoURL": "git@#[GITLAB_SSH_HOST]:$nameSpace$-dev/$nameSpace$-operations.git",
+                      "targetRevision": "HEAD"
+                  },
+                  "syncPolicy": {
+                      "automated": {}
+                  }
+              }
+            }
+                          ]]>
+          </param>
+          <param name="kind" value="Application" />
+          <param name="url" value="/apis/argoproj.io/v1alpha1/namespaces/argocd/applications" />
+        </customTask>
+
+        <customTask className="com.tremolosecurity.provisioning.tasks.CreateK8sObject">
+          <param name="targetName" value="k8s" />
+          <param name="template">
+            <![CDATA[ 
+            {
+              "apiVersion": "argoproj.io/v1alpha1",
+              "kind": "Application",
+              "metadata": {
+                  "name": "$nameSpace$-production",
+                  "namespace": "argocd"
+              },
+              "spec": {
+                  "destination": {
+                      "namespace": "$nameSpace$-prod",
+                      "server": "https://kubernetes.default.svc"
+                  },
+                  "project": "$nameSpace$",
+                  "source": {
+                      "directory": {
+                          "jsonnet": {},
+                          "recurse": true
+                      },
+                      "path": "src",
+                      "repoURL": "git@#[GITLAB_SSH_HOST]:$nameSpace$-production/$nameSpace$-operations.git",
+                      "targetRevision": "HEAD"
+                  },
+                  "syncPolicy": {
+                      "automated": {}
+                  }
+              }
+            }
+                          ]]>
+          </param>
+          <param name="kind" value="Application" />
+          <param name="url" value="/apis/argoproj.io/v1alpha1/namespaces/argocd/applications" />
+        </customTask>
+
+        <customTask className="com.tremolosecurity.argocd.tasks.AddtoRBAC">
+          <param name="k8sTarget" value="k8s" />
+          <param name="toAdd">
+            <![CDATA[ 
+p, role:$nameSpace$-operations, applications, get, $nameSpace$/*, allow
+p, role:$nameSpace$-operations, applications, override, $nameSpace$/*, allow
+p, role:$nameSpace$-operations, applications, sync, $nameSpace$/*, allow
+p, role:$nameSpace$-operations, applications, update, $nameSpace$/*, allow
+
+p, role:$nameSpace$-operations, projects, get, $nameSpace$, allow
+
+g, k8s-namespace-operations-$nameSpace$, role:$nameSpace$-operations
+
+
+p, role:$nameSpace$-dev, applications, get, $nameSpace$/*, allow
+p, role:$nameSpace$-dev, projects, get, $nameSpace$, allow
+g, k8s-namespace-developer-$nameSpace$, role:$nameSpace$-dev
+                          ]]>
+          </param>
+        </customTask>
+    </tasks>
+</workflow>

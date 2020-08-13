@@ -1,0 +1,53 @@
+<application name="activemq" azTimeoutMillis="30000" >
+  <urls>
+
+    
+    <url regex="false" authChain="LoginService" overrideHost="true" overrideReferer="true">
+      <!-- Any number of host tags may be specified to allow for an application to work on multiple hosts.  Additionally an asterick (*) can be specified to make this URL available for ALL hosts -->
+      <host>#[OU_HOST]</host>
+      <!-- The filterChain allows for transformations of the request such as manipulating attributes and injecting headers -->
+      <filterChain>
+        <filter class="com.tremolosecurity.proxy.filters.HideCookie" />
+      </filterChain>
+      <!-- The URI (aka path) of this URL -->
+      <uri>/admin</uri>
+      <!-- Tells OpenUnison how to reach the downstream application.  The ${} lets you set any request variable into the URI, but most of the time ${fullURI} is sufficient -->
+      <proxyTo>https://amq.openunison.svc.cluster.local:8162${fullURI}</proxyTo>
+      <!-- List the various results that should happen -->
+      <results>
+        
+      </results>
+      <!-- Determine if the currently logged in user may access the resource.  If ANY rule succeeds, the authorization succeeds.
+                The scope may be one of group, dn, filter, dynamicGroup or custom
+                The constraint identifies what needs to be satisfied for the authorization to pass and is dependent on the scope:
+                  * group - The DN of the group in OpenUnison's virtual directory (must be an instance of groupOfUniqueNames)
+                  * dn - The base DN of the user or users in OpenUnison's virtual directory
+                  * dynamicGroup - The DN of the dynamic group in OpenUnison's virtual directory (must be an instance of groupOfUrls)
+                  * custom - An implementation of com.tremolosecurity.proxy.az.CustomAuthorization -->
+      <azRules>
+        <rule scope="group" constraint="cn=administrators,ou=groups,ou=shadow,o=Tremolo" />
+      </azRules>
+    </url>
+
+    
+
+
+  </urls>
+  <!-- The cookie configuration determines how sessions are managed for this application -->
+  <cookieConfig>
+    <!-- The name of the session cookie for this application.  Applications that want SSO between them should have the same cookie name -->
+      <sessionCookieName>tremolosession</sessionCookieName>
+    <!-- The domain of component of the cookie -->
+    <domain>#[OU_HOST]</domain>
+    <!-- The URL that OpenUnison will interpret as the URL to end the session -->
+    <logoutURI>/logout</logoutURI>
+    <!-- The name of the AES-256 key in the keystore to use to encrypt this session -->
+    <keyAlias>session-unison</keyAlias>
+    <!-- If set to true, the cookie's secure flag is set to true and the browser will only send this cookie over https connections -->
+    <secure>true</secure>
+    <!-- The number of secconds that the session should be allowed to be idle before no longer being valid -->
+    <timeout>#[SESSION_INACTIVITY_TIMEOUT_SECONDS]</timeout>
+    <!-- required but ignored -->
+    <scope>-1</scope>
+  </cookieConfig>
+</application>

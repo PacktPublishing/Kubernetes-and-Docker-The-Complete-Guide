@@ -1,0 +1,16 @@
+<chain name="oauth2k8s" level="20">
+    <authMech>
+      <name>oauth2k8s</name>
+      <required>required</required>
+      <params>
+        <param name="k8sTarget" value="k8s"/>
+        <param name="linkToDirectory" value="false"/>
+        <param name="noMatchOU" value="oauth2"/>
+        <param name="uidAttr" value="username"/>
+        <param name="lookupFilter" value="(uid=${sub})"/>
+        <param name="defaultObjectClass" value="inetOrgPerson"/>
+        <param name="realm" value="kubernetes" />
+        <param name="scope" value="auth" />
+      </params>
+    </authMech>
+  </chain>

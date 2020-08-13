@@ -1,0 +1,6 @@
+<target name="argocd" className="com.tremolosecurity.argocd.targets.ArgoCDTarget">
+    <params>
+        <param name="url" value="#[ARGOCD_URL]"/>
+        <param name="token" value="#[ARGOCD_TOKEN]"/>
+    </params>
+</target>

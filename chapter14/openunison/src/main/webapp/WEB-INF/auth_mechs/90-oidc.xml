@@ -1,0 +1,9 @@
+<mechanism name="oidc">
+        <uri>/auth/oidc</uri>
+        <className>com.tremolosecurity.unison.proxy.auth.openidconnect.OpenIDConnectAuthMech
+        </className>
+        <init>
+
+         </init>
+        <params />
+</mechanism>

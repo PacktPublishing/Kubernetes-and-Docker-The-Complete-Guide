@@ -1,0 +1,62 @@
+<application name="k8s-login-tokens" azTimeoutMillis="30000" >
+  <urls>
+
+    
+    
+
+
+
+            <url regex="false" authChain="oauth2jwt-login" overrideHost="false" overrideReferer="false">
+                <host>#[OU_HOST]</host>
+                <filterChain>
+                  <filter class="com.tremolosecurity.scalejs.token.ws.ScaleToken">
+                  <param name="displayNameAttribute" value="uid"/>
+                  <param name="frontPage.title" value="Kubernetes kubectl command"/>
+                  <param name="frontPage.text" value="First install the certificates for Kubernetes and OpenUnison into your system's trust store, then use this kubectl command to set your user in .kubectl/config"/>
+                  <param name="logoutURL" value="/logout"/>
+                  <param name="homeURL" value="/scale/index.html"/>
+                  <param name="warnMinutesLeft" value="5" />>
+                  <param name="tokenClassName" value="com.tremolosecurity.scalejs.KubectlTokenLoader"/>
+                  <param name="uidAttributeName" value="uid"/>
+                  <param name="kubectlUsage" value="Run the kubectl command to set your user-context and server connection" />
+                  <param name="k8sCaCertName" value="unison-ca" useWhen="K8S_IMPERSONATION=true" />
+                  <param name="k8sCaCertName" value="#[K8S_API_SERVER_CERT:k8s-master]" useWhen="K8S_IMPERSONATION=false" useDefault="true"/>
+                  <param name="unisonCaCertName" value="unison-ca"/>
+                  <param name="kubectlTemplate" value="#[K8S_CLUSTER_NAME:kubernetes]" />
+                    <param name="kubectlWinUsage" value="#[K8S_URL]" />
+                </filter>
+                </filterChain>
+                <uri>/k8slogin/token</uri>
+
+                <results>
+                    <auSuccess></auSuccess>
+                    <auFail>Default Login Failure</auFail>
+                    <azSuccess></azSuccess>
+                    <azFail>PrivilegedRequest</azFail>
+                </results>
+                <azRules>
+                    <rule scope="dn" constraint="o=Tremolo"/>
+                </azRules>
+            </url>
+
+
+  </urls>
+  <!-- The cookie configuration determines how sessions are managed for this application -->
+  <cookieConfig>
+    <!-- The name of the session cookie for this application.  Applications that want SSO between them should have the same cookie name -->
+      <sessionCookieName>tremolosession</sessionCookieName>
+    <!-- The domain of component of the cookie -->
+    <domain>#[OU_HOST]</domain>
+    <!-- The URL that OpenUnison will interpret as the URL to end the session -->
+    <logoutURI>/logout</logoutURI>
+    <!-- The name of the AES-256 key in the keystore to use to encrypt this session -->
+    <keyAlias>session-unison</keyAlias>
+    <!-- If set to true, the cookie's secure flag is set to true and the browser will only send this cookie over https connections -->
+    <secure>true</secure>
+    <httpOnly>true</httpOnly>
+    <!-- The number of secconds that the session should be allowed to be idle before no longer being valid -->
+    <timeout>#[SESSION_INACTIVITY_TIMEOUT_SECONDS]</timeout>
+    <!-- required but ignored -->
+    <scope>-1</scope>
+  </cookieConfig>
+</application>
