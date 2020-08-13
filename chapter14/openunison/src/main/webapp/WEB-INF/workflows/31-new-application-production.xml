@@ -17,6 +17,7 @@
             <param name="createWebhook" value="true" />
             <param name="webhookSuffix" value="#[GITLAB_WEBHOOK_SUFFIX]" />
             <param name="webhookBranchFilter" value="master" />
+            <param name="webhookSecretRequestName" value="appProjectWebhook"/>
           </customTask>
 
           <customTask className="com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateGitFile">

@@ -287,7 +287,7 @@ spec: {}
     "namespace": "$nameSpace$-build"
   },
   "data": {
-    "secretToken": "$b64WebhookToken$"
+    "secretToken": "$b64appProjectWebhook$"
   },
   "type": "Opaque"
 }

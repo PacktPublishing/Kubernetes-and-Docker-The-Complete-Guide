@@ -1,7 +1,4 @@
+# Steps to deploy
 
-# python-hello60-build 
-
-Fork this project to create a build process for for python-hello60.  Create a pull request to deploy updates.
-
-
-  
+1. Update `src/trigger-templates/gitlab-build-template.yaml` to point to your the repository you want updated with the new build tag.
+2. Update `src/pipelineresources/result-image.yaml` to point to your container registry

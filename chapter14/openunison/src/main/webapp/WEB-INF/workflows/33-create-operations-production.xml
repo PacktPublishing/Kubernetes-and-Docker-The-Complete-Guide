@@ -13,7 +13,7 @@
           <param name="visibility" value="2" />
           <param name="targetName" value="gitlab" />
           <param name="gitSshHost" value="#[GITLAB_SSH_HOST]" />
-          <param name="createWebhook" value="true" />
+          <param name="createWebhook" value="false" />
           <param name="webhookSuffix" value="#[GITLAB_WEBHOOK_SUFFIX]" />
           <param name="webhookBranchFilter" value="master" />
         </customTask>

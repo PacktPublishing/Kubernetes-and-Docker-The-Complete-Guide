@@ -7,14 +7,14 @@ metadata:
   namespace: openunison
 spec:
   accessTokenSkewMillis: 120000
-  accessTokenTimeToLive: 60000
+  accessTokenTimeToLive: 1200000
   authChainName: LoginService
   clientId: argocd
   codeLastMileKeyName: lastmile-oidc
   codeTokenSkewMilis: 60000
   publicEndpoint: true
   redirectURI:
-  - https://argocd.apps.192-168-2-140/auth/callback
+  - https://argocd.apps.192-168-2-140.nip.io/auth/callback
   - http://localhost:8085/auth/callback
   signedUserInfo: true
   verifyRedirect: true
