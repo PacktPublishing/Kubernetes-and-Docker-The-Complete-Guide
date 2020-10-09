@@ -1,7 +1,7 @@
 # Kubernetes and Docker: An Enterprise Guide
 Kubernetes and Docker: An Enterprise Guide, published by Packt
   
-# Welcome to the repository for the Packt book, Kubernetes and Docker: An Enterprise Guide by Scott Surovich and Marc Boorshtein  
+Welcome to the repository for the Packt book, Kubernetes and Docker: An Enterprise Guide by Scott Surovich and Marc Boorshtein  
 This repo contains the scripts that are references in the book exercises.  You should clone this repo to your the local machine that you will use for the chapter exercises.  
   
 # System Requirements  
