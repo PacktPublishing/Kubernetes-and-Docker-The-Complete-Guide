@@ -2,12 +2,38 @@
 Kubernetes and Docker: An Enterprise Guide, published by Packt
   
 Welcome to the repository for the Packt book, Kubernetes and Docker: An Enterprise Guide by Scott Surovich and Marc Boorshtein  
-This repo contains the scripts that are references in the book exercises.  You should clone this repo to your the local machine that you will use for the chapter exercises.  
+This repo contains the scripts that are references in the book exercises.  You should clone this repo to the host you will use for the chapter exercises.  
+Each chapter will explain the important portions of the scripts so you will have an understanding of what the scripts are executing.  While the scripts are not required, it will save you time over typing manifests manually.  
   
+# Required Experience  
+You should have a basic understanding of Docker and Kubernetes before reading the book.  The book is already packed with a lot of content, and we didn't have any space to cover the details of installing a new cluster or diving into Kubernetes objects in depth.  
+  
+Chapters 1-3 will provide a refresh on Docker and the main features that we feel are important to understand, including how Docker uses the host filesystem and the hosts networking. Chapter 4 will provide a crash course of Kubernetes objects, but to explain each object in depth would fill an entire book, and there are many books on K8s objects already, but it will provide a "pocket guide" to objects for new readers, or as a refresher to readers with some experience. 
+
 # System Requirements  
-Note: The exercises in the book were designed to be executed on a system running Ubuntu 18.04, but all exercises have been tested with both Ubuntu 16.04 and 18.04.  
-While the majorioty of the exercises can be executed in any system running Linux, the exercises in Chapter 12 may not execute correctly on a non Ubuntu system.  All other exercies should execute on CentOS or Ubuntu.
+Ubuntu 18.04  
+4GB for most exercises, 8GB preferred  
+5-10GB of free disk space on the Docker host system    
+
+Note: The exercises in the book were designed to be run on an Ubuntu 18.04, but all exercises have been tested with both Ubuntu 16 and 18.  
+While the majorioty of the exercises can be executed on any system running Linux, the exercises in Chapter 12 may not execute correctly on a non Ubuntu system.  
+All other exercies should execute on CentOS or Ubuntu.
+
+WSL2 and Docker was tested and most exercises will work correctly, however since Chapter 12 requires bulding modules for the Kernel, the exercises will not run on WSL2 at this time.  
   
-## Ubuntu 18.04
-## 4GB for most exercises, 8GB preferred
-## 5-10GB of free disk space on the Docker host system
+# Chapter Overview  
+There are a total of 14 chapters in the book that cover topics ranging from Docker to provisioning a platform.  We created the book with the intention of helping readers go beyond a basic Kubernetes cluster, with a focus on enterprise features like adding a layer 4 load-balancer for services with dynamic service name registration, integrating a cluster with Active Directory (or LDAP), securing the K8s dashboard using RBAC and a reverse proxy, how NOT to secure the K8s dashboard, K8s impersonation, PSP's and OPA policies to secure a cluster, auditing pod actions using Falco integrated with EFK, backing up workloads using Velero, and provisioning a platform using Tekton and CI/CD tools. 
+  
+Each chapter is described below.  
+
+## Chapter 1  
+
+## Chapter 2  
+
+## Chapter 3  
+
+## Chapter 4  
+
+## Chapter 5
+
+## Chapter 6
