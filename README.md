@@ -21,19 +21,5 @@ All other exercies should execute on CentOS or Ubuntu.
 
 WSL2 and Docker was tested and most exercises will work correctly, however since Chapter 12 requires bulding modules for the Kernel, the exercises will not run on WSL2 at this time.  
   
-# Chapter Overview  
+# Book Overview  
 There are a total of 14 chapters in the book that cover topics ranging from Docker to provisioning a platform.  We created the book with the intention of helping readers go beyond a basic Kubernetes cluster, with a focus on enterprise features like adding a layer 4 load-balancer for services with dynamic service name registration, integrating a cluster with Active Directory (or LDAP), securing the K8s dashboard using RBAC and a reverse proxy, how NOT to secure the K8s dashboard, K8s impersonation, PSP's and OPA policies to secure a cluster, auditing pod actions using Falco integrated with EFK, backing up workloads using Velero, and provisioning a platform using Tekton and CI/CD tools. 
-  
-Each chapter is described below.  
-
-## Chapter 1  
-
-## Chapter 2  
-
-## Chapter 3  
-
-## Chapter 4  
-
-## Chapter 5
-
-## Chapter 6
