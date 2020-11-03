@@ -1,9 +1,12 @@
-# Kubernetes and Docker: An Enterprise Guide
-Kubernetes and Docker: An Enterprise Guide, published by Packt
+# Kubernetes and Docker: An Enterprise Guide, published by Packt
   
-Welcome to the repository for the Packt book, Kubernetes and Docker: An Enterprise Guide by Scott Surovich and Marc Boorshtein  
-This repo contains the scripts that are references in the book exercises.  You should clone this repo to the host you will use for the chapter exercises.  
+Welcome to the repository for the Packt book, Kubernetes and Docker: An Enterprise Guide by Scott Surovich and Marc Boorshtein.  
+  
+This repo contains the scripts that are references in the book exercises.  You should clone this repo to the host you will use for the exercises included with the chapters.
 Each chapter will explain the important portions of the scripts so you will have an understanding of what the scripts are executing.  While the scripts are not required, it will save you time over typing manifests manually.  
+  
+Exercises are included in chapters 1, 5-14.  
+Chapters 2 and 3 contain Docker examples which can be followed on your own host, but they are not required.  
   
 # Required Experience  
 You should have a basic understanding of Docker and Kubernetes before reading the book.  The book is already packed with a lot of content, and we didn't have any space to cover the details of installing a new cluster or diving into Kubernetes objects in depth.  
