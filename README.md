@@ -19,10 +19,10 @@ Ubuntu 18.04
 5-10GB of free disk space on the Docker host system    
 
 Note: The exercises in the book were designed to be run on an Ubuntu 18.04, but all exercises have been tested with both Ubuntu 16 and 18.  
-While the majorioty of the exercises can be executed on any system running Linux, the exercises in Chapter 12 may not execute correctly on a non Ubuntu system.  
-All other exercies should execute on CentOS or Ubuntu.
+While the majority of the exercises can be executed on any system running Linux, the exercises in Chapter 12 may not execute correctly on a non-Ubuntu system.  
+All other exercise should execute on CentOS or Ubuntu.
 
-WSL2 and Docker was tested and most exercises will work correctly, however since Chapter 12 requires bulding modules for the Kernel, the exercises will not run on WSL2 at this time.  
+WSL2 and Docker was tested and most exercises will work correctly, however since Chapter 12 requires building modules for the Kernel, the exercises will not run on WSL2 at this time.  
   
 # Book Overview  
-There are a total of 14 chapters in the book that cover topics ranging from Docker to provisioning a platform.  We created the book with the intention of helping readers go beyond a basic Kubernetes cluster, with a focus on enterprise features like adding a layer 4 load-balancer for services with dynamic service name registration, integrating a cluster with Active Directory (or LDAP), securing the K8s dashboard using RBAC and a reverse proxy, how NOT to secure the K8s dashboard, K8s impersonation, PSP's and OPA policies to secure a cluster, auditing pod actions using Falco integrated with EFK, backing up workloads using Velero, and provisioning a platform using Tekton and CI/CD tools. 
+There are a total of 14 chapters in the book that cover topics ranging from Docker to provisioning a platform.  We created the book with the intention of helping readers go beyond a basic Kubernetes cluster, with a focus on enterprise features like adding a layer 4 load-balancer for services with dynamic service name registration, integrating a cluster with Active Directory (or LDAP), securing the K8s dashboard using RBAC and a reverse proxy, how NOT to secure the K8s dashboard, K8s impersonation, PSP's and OPA policies to secure a cluster, auditing pod actions using Falco integrated with EFK, backing up workloads using Velero, and provisioning a platform using Tekton and CI/CD tools.
