@@ -1,5 +1,7 @@
 # Kubernetes and Docker: An Enterprise Guide, published by Packt
   
+Note:  Not all Chapters have code in the repo. Chapters 2, 3, and 5 do not have any exercises and therefore, you will not find any code or scripts in the repo for those chapters.  
+
 Updated information and book errata can be found in the repo wiki https://github.com/PacktPublishing/Kubernetes-and-Docker-The-Complete-Guide/wiki/_new  
   
 Welcome to the repository for the Packt book, Kubernetes and Docker: An Enterprise Guide by Scott Surovich and Marc Boorshtein.  
